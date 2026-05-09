@@ -1,0 +1,8 @@
+.research/
+node_modules/
+*.pyc
+__pycache__/
+.DS_Store
+*.pdf
+docs/*
+.pilot-research.toml

@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PLUGIN_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+SKILL_FILE="${PLUGIN_ROOT}/skills/using-pilot-research/SKILL.md"
+
+if [ ! -f "$SKILL_FILE" ]; then
+  echo '{}' 
+  exit 0
+fi
+
+raw_content=$(cat "$SKILL_FILE" 2>/dev/null || echo "")
+
+if [ -z "$raw_content" ]; then
+  echo '{}'
+  exit 0
+fi
+
+strip_frontmatter() {
+  local content="$1"
+  local stripped
+  stripped=$(printf '%s' "$content" | sed '/^---$/,/^---$/c\__FRONTMATTER_MARKER__' | sed '/__FRONTMATTER_MARKER__/d')
+  printf '%s' "$stripped"
+}
+
+body_content=$(strip_frontmatter "$raw_content")
+
+escape_for_json() {
+    local s="$1"
+    s="${s//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    printf '%s' "$s"
+}
+
+body_escaped=$(escape_for_json "$body_content")
+
+preamble="You have pilot-research.\n\n**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load \"using-pilot-research\" again - that would be redundant.**\n\n"
+tool_mapping="\n\n**Tool Mapping for OpenCode:**\\nWhen skills reference tools you don't have, substitute OpenCode equivalents:\\n- \`TodoWrite\` → \`todowrite\`\\n- \`Task\` tool with subagents → Use OpenCode's subagent system (@mention)\\n- \`Skill\` tool → OpenCode's native \`skill\` tool\\n- \`Read\`, \`Write\`, \`Edit\`, \`Bash\` → Your native tools\\n\\nUse OpenCode's native \`skill\` tool to list and load skills."
+
+session_context="<EXTREMELY_IMPORTANT>\n${preamble}${body_escaped}${tool_mapping}\n</EXTREMELY_IMPORTANT>"
+
+if [ -n "${CURSOR_PLUGIN_ROOT:-}" ]; then
+  printf '{\n  "additional_context": "%s"\n}\n' "$session_context"
+elif [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -z "${COPILOT_CLI:-}" ]; then
+  printf '{\n  "hookSpecificOutput": {\n    "hookEventName": "SessionStart",\n    "additionalContext": "%s"\n  }\n}\n' "$session_context"
+else
+  printf '{\n  "additionalContext": "%s"\n}\n' "$session_context"
+fi
+
+exit 0

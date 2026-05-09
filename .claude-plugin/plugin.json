@@ -1,0 +1,10 @@
+{
+  "name": "pilot-research",
+  "description": "Research workflow skills for coding agents: brainstorming, literature review, experiment execution, paper writing, and peer review",
+  "version": "0.1.0",
+  "author": { "name": "Pilot Research Contributors" },
+  "homepage": "https://github.com/USERNAME/pilot-research",
+  "repository": "https://github.com/USERNAME/pilot-research",
+  "license": "MIT",
+  "keywords": ["research", "literature-review", "brainstorming", "peer-review", "skills"]
+}
