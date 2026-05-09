@@ -36,7 +36,7 @@ All artifacts live in a pure markdown wiki (default: `.research/` in your projec
 curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash
 ```
 
-**Window:**
+Window
 ```powershell
 irm https://raw.githubusercontent.com/OWNER/pilot-research/main/install.ps1 | iex
 ```
@@ -98,7 +98,7 @@ node cli/pilot.mjs --help
 | `pilot ingest <type> <name>` | Create a new wiki page from a template |
 | `pilot query <terms...>` | Search the wiki for pages matching terms |
 | `pilot status` | Print wiki overview and statistics |
-| `pilot dashboard [--launch]` | Dashboard (coming soon) |
+| `pilot dashboard [--launch] [--port <port>]` | Start the research dashboard web UI |
 
 ### Ingest types
 
@@ -134,6 +134,37 @@ pilot status                        # Show wiki statistics
 ```
 
 > **Note:** `scripts/init-wiki.sh` is deprecated. Use `pilot init` instead.
+
+## Dashboard
+
+Launch a local web dashboard to browse, search, and visualize your research wiki.
+
+```bash
+pilot dashboard                # Start server at http://localhost:4213
+pilot dashboard --launch       # Start server and open browser
+pilot dashboard --port 8080    # Use a custom port
+```
+
+### Features
+
+- **Overview** — Page counts by type, latest handoff date, recent pages
+- **Page Detail** — Full markdown rendering with `[[wikilink]]` navigation and backlinks
+- **Graph View** — Force-directed knowledge graph. Nodes colored by type (paper=blue, entity=green, concept=orange, etc.). Click to navigate
+- **Search** — Full-text search across all wiki pages with type filtering
+- **Backlog** — Kanban-style view (todo / in-progress / done) pulling from experiment statuses
+- **Timeline** — Chronological handoff reports showing agent session history
+
+### API Endpoints
+
+The dashboard server exposes a REST API at `http://localhost:4213/api/`:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/pages` | List all pages with type, title, tags, wikilinks |
+| `GET /api/page/:path` | Full page content + parsed frontmatter |
+| `GET /api/graph` | Wikilink graph as nodes + edges |
+| `GET /api/search?q=...` | Full-text search |
+| `GET /api/stats` | Page counts, latest handoff, backlog summary |
 
 ## Documentation
 
