@@ -36,7 +36,7 @@ All artifacts live in a pure markdown wiki (default: `.research/` in your projec
 curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash
 ```
 
-Window
+**Window:**
 ```powershell
 irm https://raw.githubusercontent.com/OWNER/pilot-research/main/install.ps1 | iex
 ```
@@ -84,11 +84,21 @@ Copy the content of `.github/copilot-instructions.md` into your project's `.gith
 
 The `pilot` CLI manages your research wiki from the terminal.
 
+### Install from source
+
 ```bash
-npm install -g pilot-research
-# or run directly:
-node cli/pilot.mjs --help
+git clone https://github.com/OWNER/pilot-research.git
+cd pilot-research
+
+# Add to PATH (pick one):
+npm link                              # makes `pilot` available globally
+# or:
+alias pilot="node $(pwd)/cli/pilot.mjs"
+# or add to your shell profile:
+echo 'alias pilot="node /path/to/pilot-research/cli/pilot.mjs"' >> ~/.zshrc
 ```
+
+No npm package yet — run directly from the repo for now.
 
 ### Commands
 
