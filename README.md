@@ -30,14 +30,13 @@ All artifacts live in a pure markdown wiki (default: `.research/` in your projec
 
 ## Installation
 
-### One-line install (macOS / Linux)
-
+### One-line install
+**MacOS/Linux/WSL:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash
 ```
 
-### One-line install (Windows)
-
+**Window:**
 ```powershell
 irm https://raw.githubusercontent.com/OWNER/pilot-research/main/install.ps1 | iex
 ```

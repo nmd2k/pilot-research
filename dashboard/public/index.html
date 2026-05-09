@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pilot Research Dashboard</title>
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <h1>Pilot Research</h1>
+      <div class="search">
+        <input type="text" id="search-input" placeholder="Search wiki..." onkeydown="if(event.key==='Enter')navigateTo('search',this.value)">
+      </div>
+      <div class="nav-tabs">
+        <div class="nav-tab active" onclick="navigateTo('overview')">Overview</div>
+        <div class="nav-tab" onclick="navigateTo('graph')">Graph</div>
+        <div class="nav-tab" onclick="navigateTo('backlog')">Backlog</div>
+        <div class="nav-tab" onclick="navigateTo('timeline')">Timeline</div>
+      </div>
+    </div>
+    <div class="sidebar" id="sidebar">
+      <div class="section"><h3>Loading...</h3></div>
+    </div>
+    <div class="main" id="main">
+      <div class="empty-state"><h3>Loading wiki...</h3></div>
+    </div>
+  </div>
+  <script src="/app.js"></script>
+</body>
+</html>

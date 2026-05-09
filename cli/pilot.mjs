@@ -320,11 +320,25 @@ function cmdDashboard(args) {
     else if (args[i] === '--help') { printDashboardHelp(); return; }
   }
 
-  console.log(`${CYAN}Dashboard coming soon.${RESET}`);
-  console.log(`  Will be available at http://localhost:${port}`);
-  console.log(`  Launch flag: ${launch ? 'yes' : 'no'}`);
-  console.log('');
-  console.log('See P10 in the backlog for implementation details.');
+  const dashboardPath = path.join(PROJECT_ROOT, 'dashboard');
+  const serverModule = path.join(dashboardPath, 'server.mjs');
+
+  if (!fs.existsSync(serverModule)) {
+    log('error', 'Dashboard server not found. Make sure you are running from the pilot-research project root.');
+    process.exit(1);
+  }
+
+  const config = readConfig(process.cwd());
+  const wikiPath = config.wiki_path
+    ? path.resolve(config.wiki_path)
+    : findWikiDir(process.cwd());
+
+  import(serverModule).then(mod => {
+    mod.startServer({ wikiDir: wikiPath || undefined, port, launch });
+  }).catch(err => {
+    log('error', `Failed to start dashboard: ${err.message}`);
+    process.exit(1);
+  });
 }
 
 function printHelp() {
