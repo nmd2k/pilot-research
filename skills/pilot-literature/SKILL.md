@@ -67,7 +67,7 @@ Ask the researcher:
 Use `arxiv-query.py` to find papers on ArXiv:
 
 ```bash
-python scripts/arxiv-query.py --query "your search terms" --max-results 20
+pilot arxiv-query --query "your search terms" --max-results 20
 ```
 
 For researcher-provided PDFs or URLs, process them directly in Step 5.
@@ -89,7 +89,7 @@ Present found papers to the researcher for selection before deep reading:
 For each selected paper, use `pdf-extract.py` to extract content:
 
 ```bash
-python scripts/pdf-extract.py --input <path-or-url>
+pilot pdf-extract --input <path-or-url>
 ```
 
 Or read the paper content directly from a provided URL.
@@ -162,16 +162,16 @@ The `arxiv-query.py` script queries ArXiv's API. Key usage:
 
 ```bash
 # Basic search
-python scripts/arxiv-query.py --query "transformer attention mechanism" --max-results 10
+pilot arxiv-query --query "transformer attention mechanism" --max-results 10
 
 # Search with date filter
-python scripts/arxiv-query.py --query "large language models" --max-results 20 --start-year 2022
+pilot arxiv-query --query "large language models" --max-results 20 --start-year 2022
 
 # Search specific categories
-python scripts/arxiv-query.py --query "reinforcement learning" --categories cs.AI,cs.LG
+pilot arxiv-query --query "reinforcement learning" --categories cs.AI,cs.LG
 ```
 
-<EXTREMELY-IMPORTANT>Always check the script's help (`python scripts/arxiv-query.py --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Always check the script's help (`pilot arxiv-query --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
 
 ## Red Flags
 
