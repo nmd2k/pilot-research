@@ -86,14 +86,20 @@ Present found papers to the researcher for selection before deep reading:
 
 ### Step 5: Read
 
-For each selected paper, use `pdf-extract.py` to extract content:
+**Preferred Method (HTML):**
+ArXiv now provides HTML versions for most recent papers, which are much cleaner and preserve math/formatting better than PDFs.
+1. Extract the ArXiv ID from the search results (e.g., `2310.12345v1`).
+2. Construct the HTML URL: `https://arxiv.org/html/2310.12345v1`
+3. Use your built-in web fetching tool (e.g., `webfetch` or browser) to read the page.
+
+**Fallback Method (PDF):**
+If the HTML version is unavailable or you are working with a direct PDF file, use the CLI extractor:
 
 ```bash
-pilot pdf-extract --input <path-or-url>
+pilot pdf-extract <path-or-url>
 ```
 
-Or read the paper content directly from a provided URL.
-
+While reading the paper:
 - [ ] Extract key arguments, methodology, results, and conclusions
 - [ ] Note connections to other papers and concepts
 - [ ] Identify entities (authors, datasets, tools, institutions)
