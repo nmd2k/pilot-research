@@ -15,7 +15,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
 
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
 4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
 
@@ -33,19 +33,19 @@ All research content lives in `.research/` in the project root:
 - `queries/` — Saved Q&A results `[[query-<topic>]]`
 - `plans/` — Research plans `[[plan-v<N>]]`
 - `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
 
-## <HARD-GATE>Before You Begin</HARD-GATE>
+## Before You Begin
 
-- [ ] Check `.research/handoff/` for a previous handoff report
-- [ ] If handoff exists, read it and resume context
 - [ ] Read the latest research plan from `.research/plans/` (if any)
+- [ ] Read relevant wiki artifacts from `.research/` (papers, concepts, entities, queries, plans, experiments)
+- [ ] Check `.research/handoff/` for a previous handoff report
 - [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md` (if any)
-- [ ] Review relevant wiki pages referenced in existing plans
+- [ ] Ask whether new findings should be appended to the wiki
 
-## Three Cases
+## Use Cases
 
-Determine which case applies based on the current state:
+Determine which use case applies based on the current state:
 
 ### Case 1: New Research Plan
 
@@ -84,6 +84,18 @@ Focus on:
 
 <EXTREMELY-IMPORTANT>When updating a plan, always create a new version (`v<N+1>.md`). Never overwrite an existing plan. Update the backlog to match.</EXTREMELY-IMPORTANT>
 
+### Case 4: Query
+
+**Trigger:** Researcher asks a question, wants to discuss, or brainstorms around an idea without necessarily requesting plan/backlog edits.
+
+Focus on:
+- Search relevant content in `.research/` first and answer from existing artifacts
+- Ground answers in existing wiki pages and use `[[wikilinks]]` when citing
+- If the answer is not available in the wiki, ask for permission before web search
+- After answering, ask: "Do you want to add this into our wiki?"
+
+<EXTREMELY-IMPORTANT>Do not hallucinate missing facts. If wiki evidence is insufficient, explicitly say so and ask whether to search the web.</EXTREMELY-IMPORTANT>
+
 ## Process Flow
 
 ### Step 1: Read Context
@@ -92,7 +104,7 @@ Read all relevant existing artifacts:
 - Latest plan from `.research/plans/`
 - Latest backlog from `.research/plans/v<N>-backlog.md`
 - Relevant `[[paper-<slug>]]`, `[[concept-<name>]]`, `[[entity-<name>]]` pages
-- Any `[[handoff-<YYYY-MM-DD>]]` reports
+- Any `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` reports
 
 ### Step 2: Clarify
 
@@ -100,7 +112,8 @@ Ask the researcher about:
 - [ ] Their goals and what they want to achieve
 - [ ] Any constraints (time, resources, data availability)
 - [ ] Ambiguous points in their request
-- [ ] Whether this is Case 1, 2, or 3
+- [ ] Whether this is Case 1, 2, 3, or 4 (Query)
+- [ ] Whether they want new findings appended to wiki pages
 
 ### Step 3: Discuss
 
@@ -113,7 +126,15 @@ Engage in Socratic dialogue:
 
 <EXTREMELY-IMPORTANT>Do not just agree with the researcher. Your job is to stress-test ideas, expose flaws, and improve the research plan through constructive critique.</EXTREMELY-IMPORTANT>
 
-### Step 4: Produce/Update Plan
+### Step 4: Produce Response or Plan
+
+If this is Case 4 (Query):
+- [ ] Answer using wiki-grounded evidence first
+- [ ] If wiki evidence is missing, ask permission before web search
+- [ ] After answering, ask: "Do you want to add this into our wiki?"
+
+If this is Case 1-3:
+- [ ] Produce/update plan and backlog as below
 
 Write or update the research plan using `research-plan-template.md`:
 - [ ] Research question is clearly stated
@@ -173,7 +194,7 @@ After completing brainstorming:
 - If the researcher is ready to execute tasks → invoke `pilot-research:pilot-execute`
 - If the researcher wants feedback on the plan → invoke `pilot-research:pilot-peer-review`
 
-<EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YYYY-MM-DD.md` before ending the session or transitioning to another skill.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Before ending the session or transitioning to another skill, ask the researcher whether they want a handoff report in `.research/handoff/YY-MM-DD-brainstorm-<agent-name>.md`.</EXTREMELY-IMPORTANT>
 
 ## Templates
 

@@ -15,7 +15,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
 
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
 4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
 
@@ -33,7 +33,7 @@ All research content lives in `.research/` in the project root:
 - `queries/` — Saved Q&A results `[[query-<topic>]]`
 - `plans/` — Research plans `[[plan-v<N>]]`
 - `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -119,7 +119,7 @@ Write the paper draft to the wiki or project root as specified by the researcher
 - [ ] Save a reference copy in the wiki for traceability
 - [ ] Update the research plan with a link to the paper draft
 
-<EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YYYY-MM-DD.md` before ending the session.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YY-MM-DD-write-<agent-name>.md` before ending the session.</EXTREMELY-IMPORTANT>
 
 ## Red Flags
 

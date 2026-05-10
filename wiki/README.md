@@ -19,7 +19,7 @@ Welcome to the research wiki. This is a structured knowledge graph for your rese
 | `queries/` | Saved Q&A results | `[[query-<topic>]]` |
 | `plans/` | Research plans | `[[plan-v<N>]]` |
 | `experiments/` | Experiment reports | `[[exp-<name>]]` |
-| `handoff/` | Agent handoff artifacts | `[[handoff-<YYYY-MM-DD>]]` |
+| `handoff/` | Agent handoff artifacts | `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` |
 
 ## Naming Conventions
 
@@ -31,7 +31,7 @@ Welcome to the research wiki. This is a structured knowledge graph for your rese
 | Query | `queries/<topic>.md` | `[[query-<topic>]]` |
 | Plan | `plans/v<N>.md` | `[[plan-v<N>]]` |
 | Experiment | `experiments/<name>.md` | `[[exp-<name>]]` |
-| Handoff | `handoff/<YYYY-MM-DD>.md` | `[[handoff-<YYYY-MM-DD>]]` |
+| Handoff | `handoff/<YY-MM-DD>-<skill>-<agent-name>.md` | `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` |
 
 ## Wikilink Rules
 

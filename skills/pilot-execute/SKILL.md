@@ -5,7 +5,7 @@ description: "Use when researcher wants to execute research tasks from the backl
 
 # Execute Research
 
-This skill manages research execution using a **leader/worker pattern**. The main agent acts as the leader, coordinating tasks and spawning sub-agents (workers) to execute individual experiments.
+This skill manages research execution using a **leader/worker pattern**. When this skill is invoked, the current agent is the leader by default. The leader coordinates tasks, spawns worker sub-agents, monitors progress, validates outputs, and decides follow-up actions with the researcher.
 
 ## <HARD-GATE>Mandatory Rules</HARD-GATE>
 
@@ -15,7 +15,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
 
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
 4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
 
@@ -33,7 +33,7 @@ All research content lives in `.research/` in the project root:
 - `queries/` — Saved Q&A results `[[query-<topic>]]`
 - `plans/` — Research plans `[[plan-v<N>]]`
 - `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -47,17 +47,19 @@ All research content lives in `.research/` in the project root:
 
 ## Leader / Worker Pattern
 
-### Leader (main agent using `leader-prompt.md`)
+### Leader (the current agent running this skill)
 
 The leader is responsible for:
 - Reading the plan and backlog
 - Deciding which tasks to execute and in what order
 - Spawning workers with clear, specific instructions
-- Reviewing worker results for quality and completeness
+- Monitoring worker progress and handling blockers
+- Reviewing worker results for quality, completeness, and correctness
+- Validating that outputs satisfy task objectives before accepting completion
 - Updating the backlog status and plan as needed
 - Writing handoff reports when sessions transition
 
-The leader does **not** execute tasks directly. It coordinates.
+The leader primarily coordinates and validates execution. Workers perform the scoped execution work.
 
 ### Worker (sub-agent using `worker-prompt.md`)
 
@@ -83,7 +85,7 @@ Each worker must:
 Gather all relevant state:
 - [ ] Read the latest plan from `.research/plans/v<N>.md`
 - [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md`
-- [ ] Read any `[[handoff-<YYYY-MM-DD>]]` reports
+- [ ] Read any `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` reports
 - [ ] Review any in-progress experiment reports in `.research/experiments/`
 - [ ] Note which tasks are done, in-progress, and pending
 
@@ -123,13 +125,16 @@ Worker instructions must include:
 - Which `[[wikilinks]]` are relevant
 - Where to save the experiment report
 - What format the results should follow
+- Validation criteria the worker output must satisfy
 
 ### Step 5: Gather Results
 
 After each worker completes:
-- [ ] Review the experiment report for completeness
+- [ ] Review the experiment report for completeness and correctness
 - [ ] Check that results are saved to the wiki
 - [ ] Check that `[[wikilinks]]` are correct
+- [ ] Validate results against the task objective and success criteria
+- [ ] If quality is insufficient, send revision feedback and rerun the worker task
 - [ ] Ask the researcher if results are satisfactory
 - [ ] If results are unsatisfactory, discuss whether to retry, adjust, or move on
 
@@ -144,7 +149,7 @@ Based on results:
 
 ### Step 7: Handoff
 
-Write a handoff report to `.research/handoff/YYYY-MM-DD.md` using `handoff-report-template.md`:
+Write a handoff report to `.research/handoff/YY-MM-DD-execute-<agent-name>.md` using `handoff-report-template.md`:
 - [ ] What was done (completed tasks)
 - [ ] What was left undone (pending tasks)
 - [ ] Commands run (with exit codes)
@@ -185,7 +190,6 @@ After completing execution:
 
 ## Templates
 
-- `leader-prompt.md` — Prompt template for the leader agent
 - `worker-prompt.md` — Prompt template for worker sub-agents
 - `experiment-design-template.md` — For designing experiments before execution
 - `experiment-report-template.md` — For writing experiment results
