@@ -14,7 +14,7 @@ The research wiki is a markdown-based knowledge graph using `[[wikilinks]]` and 
 | `queries/` | Saved Q&A results | Query | `[[query-<topic>]]` |
 | `plans/` | Research plans | Plan | `[[plan-v<N>]]` |
 | `experiments/` | Experiment reports | Experiment | `[[exp-<name>]]` |
-| `handoff/` | Agent handoff artifacts | Handoff | `[[handoff-<YYYY-MM-DD>]]` |
+| `handoff/` | Agent handoff artifacts | Handoff | `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` |
 
 ## Naming Conventions
 
@@ -59,9 +59,9 @@ Use a lowercase hyphenated name:
 
 ### Handoff filenames
 
-Use ISO date format:
+Use short date + skill + agent name:
 
-- `handoff/2025-01-15.md` → `[[handoff-2025-01-15]]`
+- `handoff/26-05-10-execute-gsm8kexp.md` → `[[handoff-26-05-10-execute-gsm8kexp]]`
 
 ## Wikilink Syntax and Rules
 
@@ -223,7 +223,7 @@ When a new paper introduces information about an existing concept:
 
 When a session is ending and work remains:
 
-1. Create `handoff/<YYYY-MM-DD>.md` with handoff type frontmatter
+1. Create `handoff/<YY-MM-DD>-<skill>-<agent-name>.md` with handoff type frontmatter
 2. Document what was done (completed tasks with wikilinks to artifacts)
 3. Document what was left undone (pending tasks)
 4. List commands run with exit codes

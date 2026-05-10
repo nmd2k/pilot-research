@@ -11,6 +11,7 @@ ALL=0
 LIST_ONLY=0
 ONLY=()
 NO_COLOR=0
+UNINSTALL=0
 
 if [ ! -t 1 ]; then NO_COLOR=1; fi
 
@@ -31,6 +32,7 @@ USAGE
 FLAGS
   --dry-run         Print what would run, do nothing.
   --force           Re-run even if already installed.
+  --uninstall       Remove all plugins, skills, and the CLI.
   --only <agent>    Install only for the named agent. Repeatable (skips auto-detection).
   --minimal         Just the skill files and plugin manifests. No CLI, no rule files.
   --all             Install everything: plugins + CLI + per-repo rule files.
@@ -57,6 +59,7 @@ while [ $# -gt 0 ]; do
     --minimal)      MINIMAL=1 ;;
     --all)          ALL=1 ;;
     --list)         LIST_ONLY=1 ;;
+    --uninstall)    UNINSTALL=1 ;;
     --no-color)     NO_COLOR=1 ;;
     --only)
       shift
@@ -248,6 +251,68 @@ INSTALLED=()
 SKIPPED=()
 FAILED=()
 
+remove_pilot_skills_from() {
+  local dest_base="$1"
+  if [ -d "$dest_base" ]; then
+    run rm -rf "$dest_base/pilot-"* "$dest_base/using-pilot-research" 2>/dev/null || true
+  fi
+}
+
+uninstall_claude() {
+  say "→ Uninstalling from Claude Code"
+  run rm -rf "$HOME/.claude-plugin/pilot-research"
+  remove_pilot_skills_from "$HOME/.claude/skills"
+  INSTALLED+=("claude (uninstalled)")
+}
+
+uninstall_opencode() {
+  say "→ Uninstalling from OpenCode"
+  run rm -f "$HOME/.opencode/plugins/pilot-research.js"
+  remove_pilot_skills_from "$(config_home)/opencode/skills"
+  INSTALLED+=("opencode (uninstalled)")
+}
+
+uninstall_cursor() {
+  say "→ Uninstalling from Cursor"
+  run rm -f "$HOME/.cursor/rules/pilot-research.mdc"
+  remove_pilot_skills_from "$HOME/.cursor/skills"
+  INSTALLED+=("cursor (uninstalled)")
+}
+
+uninstall_windsurf() {
+  say "→ Uninstalling from Windsurf"
+  run rm -f ".windsurf/rules/pilot-research.md"
+  INSTALLED+=("windsurf (uninstalled)")
+}
+
+uninstall_cline() {
+  say "→ Uninstalling from Cline"
+  run rm -f ".clinerules/pilot-research.md"
+  INSTALLED+=("cline (uninstalled)")
+}
+
+uninstall_copilot() {
+  say "→ Uninstalling from GitHub Copilot"
+  run rm -f ".github/copilot-instructions.md"
+  INSTALLED+=("copilot (uninstalled)")
+}
+
+uninstall_codex() {
+  say "→ Uninstalling from Codex CLI"
+  remove_pilot_skills_from "$HOME/.agents/skills"
+  run rm -f "$HOME/.codex/instructions.md"
+  INSTALLED+=("codex (uninstalled)")
+}
+
+uninstall_cli() {
+  say "→ Uninstalling CLI"
+  run rm -f "$HOME/.local/bin/pilot" "$HOME/.local/bin/pilot.tmp"
+  if has npm; then
+    run npm uninstall -g pilot-research 2>/dev/null || true
+  fi
+  INSTALLED+=("cli (uninstalled)")
+}
+
 install_claude() {
   say "→ Claude Code detected"
   local target_dir="$HOME/.claude-plugin/pilot-research"
@@ -431,27 +496,29 @@ EOF
   fi
 
   # 2) Optional future: single-file prebuilt binaries under cli/bin/ on GitHub.
-  local arch os binary_url=""
-  arch="$(uname -m)"
-  os="$(uname -s)"
-  if [ "$os" = "Darwin" ]; then
-    if [ "$arch" = "arm64" ]; then binary_url="$PILOT_CLI_URL_ARM64"; else binary_url="$PILOT_CLI_URL_X64"; fi
-  elif [ "$os" = "Linux" ]; then
-    binary_url="$PILOT_CLI_URL_LINUX"
-  fi
-
-  if [ -n "$binary_url" ] && has curl; then
-    note "  Trying prebuilt pilot binary…"
-    if [ "$DRY" = 1 ]; then
-      note "  would download: $binary_url → $bin_dir/pilot"
-    elif curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
-      chmod +x "$bin_dir/pilot"
-      ok "  pilot CLI installed to $bin_dir/pilot"
-      INSTALLED+=("cli")
-      note "  Ensure $bin_dir is on your PATH."
-      return 0
-    fi
-  fi
+  # (Currently disabled: CLI relies on dynamic ESM imports and physical template files
+  # which are best distributed via npm rather than a compiled standalone binary.)
+  # local arch os binary_url=""
+  # arch="$(uname -m)"
+  # os="$(uname -s)"
+  # if [ "$os" = "Darwin" ]; then
+  #   if [ "$arch" = "arm64" ]; then binary_url="$PILOT_CLI_URL_ARM64"; else binary_url="$PILOT_CLI_URL_X64"; fi
+  # elif [ "$os" = "Linux" ]; then
+  #   binary_url="$PILOT_CLI_URL_LINUX"
+  # fi
+  #
+  # if [ -n "$binary_url" ] && has curl; then
+  #   note "  Trying prebuilt pilot binary…"
+  #   if [ "$DRY" = 1 ]; then
+  #     note "  would download: $binary_url → $bin_dir/pilot"
+  #   elif curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
+  #     chmod +x "$bin_dir/pilot"
+  #     ok "  pilot CLI installed to $bin_dir/pilot"
+  #     INSTALLED+=("cli")
+  #     note "  Ensure $bin_dir is on your PATH."
+  #     return 0
+  #   fi
+  # fi
 
   # 3) npm global (registry, then GitHub) — ships CLI + dashboard assets.
   if has npm; then
@@ -506,7 +573,9 @@ note "  $REPO"
 if [ "$DRY" = 1 ]; then note "  (dry run — nothing will be written)"; fi
 echo
 
-prepare_skills_source || note "  Continuing without a downloaded skills tree (local install only may still work)."
+if [ "$UNINSTALL" = 0 ]; then
+  prepare_skills_source || note "  Continuing without a downloaded skills tree (local install only may still work)."
+fi
 
 i=0
 total=${#PROVIDER_IDS[@]}
@@ -524,20 +593,34 @@ while [ $i -lt "$total" ]; do
     fi
   fi
   if [ "$run_install" = 1 ]; then
-    case "$id" in
-      claude)  install_claude ;;
-      opencode) install_opencode ;;
-      cursor)  install_cursor ;;
-      windsurf) install_windsurf ;;
-      cline)   install_cline ;;
-      copilot)  install_copilot ;;
-      codex)   install_codex ;;
-    esac
+    if [ "$UNINSTALL" = 1 ]; then
+      case "$id" in
+        claude)  uninstall_claude ;;
+        opencode) uninstall_opencode ;;
+        cursor)  uninstall_cursor ;;
+        windsurf) uninstall_windsurf ;;
+        cline)   uninstall_cline ;;
+        copilot)  uninstall_copilot ;;
+        codex)   uninstall_codex ;;
+      esac
+    else
+      case "$id" in
+        claude)  install_claude ;;
+        opencode) install_opencode ;;
+        cursor)  install_cursor ;;
+        windsurf) install_windsurf ;;
+        cline)   install_cline ;;
+        copilot)  install_copilot ;;
+        codex)   install_codex ;;
+      esac
+    fi
   fi
   i=$((i + 1))
 done
 
-if [ "$ALL" = 1 ]; then
+if [ "$UNINSTALL" = 1 ]; then
+  uninstall_cli
+elif [ "$ALL" = 1 ]; then
   say "→ Writing per-repo rule files (--all)"
   write_rule_file ".cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
   write_rule_file ".windsurf/rules/pilot-research.md" "$WINDSURF_RULE"
@@ -545,7 +628,9 @@ if [ "$ALL" = 1 ]; then
   write_rule_file ".github/copilot-instructions.md" "$COPILOT_RULE"
 fi
 
-install_cli
+if [ "$UNINSTALL" = 0 ]; then
+  install_cli
+fi
 
 echo
 say "pilot-research installer done"
@@ -571,8 +656,10 @@ if [ ${#INSTALLED[@]} -eq 0 ] && [ ${#SKIPPED[@]} -eq 0 ]; then
 fi
 
 echo
-note "  Start a session and your agent will discover pilot-research skills automatically."
-note "  Use 'pilot init' to initialize a research wiki in your project."
-note "  Uninstall: remove the plugin directory and rule files manually."
+if [ "$UNINSTALL" = 0 ]; then
+  note "  Start a session and your agent will discover pilot-research skills automatically."
+  note "  Use 'pilot init' to initialize a research wiki in your project."
+  note "  Uninstall: run 'install.sh --uninstall'"
+fi
 
 exit 0

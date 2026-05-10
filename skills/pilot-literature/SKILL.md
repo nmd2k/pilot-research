@@ -15,7 +15,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
 
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
 4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
 
@@ -33,7 +33,7 @@ All research content lives in `.research/` in the project root:
 - `queries/` — Saved Q&A results `[[query-<topic>]]`
 - `plans/` — Research plans `[[plan-v<N>]]`
 - `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -43,6 +43,13 @@ All research content lives in `.research/` in the project root:
 - [ ] Review relevant wiki pages to avoid duplicating existing summaries
 
 ## Process Flow
+
+### Operation Modes
+
+Choose one mode before execution:
+
+- **Search + Ingest** — Use Steps 1-10 when the researcher wants discovery plus ingestion.
+- **Ingest Only** — If the researcher already provides paper IDs/URLs/PDFs, skip Steps 3-4 and start from Step 5.
 
 ### Step 1: Read Research Plan
 
@@ -61,13 +68,14 @@ Ask the researcher:
 - [ ] Time range constraints? (e.g., "only papers from 2020 onwards")
 - [ ] How many papers are expected?
 - [ ] Are there specific papers or authors they already know about?
+- [ ] Is this **Search + Ingest** or **Ingest Only** mode?
 
 ### Step 3: Search
 
 Use `arxiv-query.py` to find papers on ArXiv:
 
 ```bash
-python scripts/arxiv-query.py --query "your search terms" --max-results 20
+pilot arxiv-query --query "your search terms" --max-results 20
 ```
 
 For researcher-provided PDFs or URLs, process them directly in Step 5.
@@ -86,21 +94,31 @@ Present found papers to the researcher for selection before deep reading:
 
 ### Step 5: Read
 
-For each selected paper, use `pdf-extract.py` to extract content:
+**Preferred Method (HTML):**
+ArXiv now provides HTML versions for most recent papers, which are much cleaner and preserve math/formatting better than PDFs.
+1. Extract the ArXiv ID from the search results (e.g., `2310.12345v1`).
+2. Construct the HTML URL: `https://arxiv.org/html/2310.12345v1`
+3. Use your built-in web fetching tool (e.g., `webfetch` or browser) to read the page.
+
+**Fallback Method (PDF):**
+If the HTML version is unavailable or you are working with a direct PDF file, use the CLI extractor:
 
 ```bash
-python scripts/pdf-extract.py --input <path-or-url>
+pilot pdf-extract <path-or-url>
 ```
 
-Or read the paper content directly from a provided URL.
-
+While reading the paper:
 - [ ] Extract key arguments, methodology, results, and conclusions
 - [ ] Note connections to other papers and concepts
 - [ ] Identify entities (authors, datasets, tools, institutions)
 
+<EXTREMELY-IMPORTANT>For ingest requests, this is the starting step. If the researcher already provided papers, execute from Step 5 without requiring Steps 3-4.</EXTREMELY-IMPORTANT>
+
 ### Step 6: Summarize
 
-Write a paper summary using `paper-summary-template.md` for each paper:
+Delegate summarization to worker subagents. The main literature agent should prepare inputs and quality criteria, then review worker outputs.
+
+Worker task requirements:
 - [ ] One-line summary captures the core contribution
 - [ ] Key contribution is clearly stated
 - [ ] Methodology is described at a high level
@@ -113,7 +131,7 @@ Save to `.research/papers/<arxiv-id-or-slug>.md`
 
 ### Step 7: Extract
 
-Identify and create/update entities and concepts from the paper:
+Delegate entity/concept extraction to worker subagents. Workers identify and create/update entities and concepts from the paper:
 
 **Entities** (using `entity-template.md`):
 - [ ] Authors, datasets, tools, institutions
@@ -131,7 +149,7 @@ Identify and create/update entities and concepts from the paper:
 
 ### Step 8: Link
 
-Connect everything with `[[wikilinks]]`:
+Delegate wikilink integration to worker subagents. Workers must connect everything with `[[wikilinks]]`:
 - [ ] Paper summaries link to entities and concepts mentioned
 - [ ] Entity pages link back to papers and related concepts
 - [ ] Concept pages link back to papers and related entities
@@ -141,7 +159,7 @@ Connect everything with `[[wikilinks]]`:
 
 ### Step 9: Save
 
-Write all artifacts to the appropriate wiki folders:
+Delegate artifact writes to worker subagents. Workers write artifacts to the appropriate wiki folders:
 - [ ] Paper summaries → `.research/papers/`
 - [ ] Entity pages → `.research/entities/`
 - [ ] Concept pages → `.research/concepts/`
@@ -149,7 +167,12 @@ Write all artifacts to the appropriate wiki folders:
 
 ### Step 10: Report
 
-Summarize what was added/updated for the researcher:
+Main literature agent responsibilities:
+- [ ] Coordinate worker assignments for Steps 6-9
+- [ ] Review and validate worker outputs before final reporting
+- [ ] Resolve conflicts or duplicates across worker outputs
+
+Then summarize what was added/updated for the researcher:
 - [ ] List all new papers summarized
 - [ ] List all new entities and concepts created
 - [ ] List all existing pages updated
@@ -162,16 +185,16 @@ The `arxiv-query.py` script queries ArXiv's API. Key usage:
 
 ```bash
 # Basic search
-python scripts/arxiv-query.py --query "transformer attention mechanism" --max-results 10
+pilot arxiv-query --query "transformer attention mechanism" --max-results 10
 
 # Search with date filter
-python scripts/arxiv-query.py --query "large language models" --max-results 20 --start-year 2022
+pilot arxiv-query --query "large language models" --max-results 20 --start-year 2022
 
 # Search specific categories
-python scripts/arxiv-query.py --query "reinforcement learning" --categories cs.AI,cs.LG
+pilot arxiv-query --query "reinforcement learning" --categories cs.AI,cs.LG
 ```
 
-<EXTREMELY-IMPORTANT>Always check the script's help (`python scripts/arxiv-query.py --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Always check the script's help (`pilot arxiv-query --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
 
 ## Red Flags
 
@@ -200,7 +223,7 @@ After completing literature review:
 - If ready to design experiments based on literature → invoke `pilot-research:pilot-execute`
 - If researcher wants feedback on the literature review → invoke `pilot-research:pilot-peer-review`
 
-<EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YYYY-MM-DD.md` before ending the session or transitioning to another skill.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YY-MM-DD-literature-<agent-name>.md` before ending the session or transitioning to another skill.</EXTREMELY-IMPORTANT>
 
 ## Templates
 
