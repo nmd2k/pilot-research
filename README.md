@@ -27,7 +27,7 @@ All artifacts live in a pure markdown wiki (default: `.research/` in your projec
 ├── queries/         # Saved Q&A results [[query-<topic>]]
 ├── plans/           # Research plans [[plan-v<N>]]
 ├── experiments/     # Experiment reports [[exp-<name>]]
-└── handoff/         # Agent handoff artifacts [[handoff-<YYYY-MM-DD>]]
+└── handoff/         # Agent handoff artifacts [[handoff-<YY-MM-DD>-<skill>-<agent-name>]]
 ```
 
 ## Installation
