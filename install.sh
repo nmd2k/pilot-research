@@ -431,27 +431,29 @@ EOF
   fi
 
   # 2) Optional future: single-file prebuilt binaries under cli/bin/ on GitHub.
-  local arch os binary_url=""
-  arch="$(uname -m)"
-  os="$(uname -s)"
-  if [ "$os" = "Darwin" ]; then
-    if [ "$arch" = "arm64" ]; then binary_url="$PILOT_CLI_URL_ARM64"; else binary_url="$PILOT_CLI_URL_X64"; fi
-  elif [ "$os" = "Linux" ]; then
-    binary_url="$PILOT_CLI_URL_LINUX"
-  fi
-
-  if [ -n "$binary_url" ] && has curl; then
-    note "  Trying prebuilt pilot binary…"
-    if [ "$DRY" = 1 ]; then
-      note "  would download: $binary_url → $bin_dir/pilot"
-    elif curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
-      chmod +x "$bin_dir/pilot"
-      ok "  pilot CLI installed to $bin_dir/pilot"
-      INSTALLED+=("cli")
-      note "  Ensure $bin_dir is on your PATH."
-      return 0
-    fi
-  fi
+  # (Currently disabled: CLI relies on dynamic ESM imports and physical template files
+  # which are best distributed via npm rather than a compiled standalone binary.)
+  # local arch os binary_url=""
+  # arch="$(uname -m)"
+  # os="$(uname -s)"
+  # if [ "$os" = "Darwin" ]; then
+  #   if [ "$arch" = "arm64" ]; then binary_url="$PILOT_CLI_URL_ARM64"; else binary_url="$PILOT_CLI_URL_X64"; fi
+  # elif [ "$os" = "Linux" ]; then
+  #   binary_url="$PILOT_CLI_URL_LINUX"
+  # fi
+  #
+  # if [ -n "$binary_url" ] && has curl; then
+  #   note "  Trying prebuilt pilot binary…"
+  #   if [ "$DRY" = 1 ]; then
+  #     note "  would download: $binary_url → $bin_dir/pilot"
+  #   elif curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
+  #     chmod +x "$bin_dir/pilot"
+  #     ok "  pilot CLI installed to $bin_dir/pilot"
+  #     INSTALLED+=("cli")
+  #     note "  Ensure $bin_dir is on your PATH."
+  #     return 0
+  #   fi
+  # fi
 
   # 3) npm global (registry, then GitHub) — ships CLI + dashboard assets.
   if has npm; then
