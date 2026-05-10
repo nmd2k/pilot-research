@@ -36,13 +36,13 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
         parts.push(<em key={`i-${match.index}`} className="italic">{match[3]}</em>);
       } else if (match[4]) {
         parts.push(
-          <code key={`c-${match.index}`} className="font-mono text-sm bg-surface px-1.5 py-0.5 rounded border border-outline text-on-surface">
+          <code key={`c-${match.index}`} className="font-mono text-sm bg-surface px-1.5 py-0.5 rounded border border-outline text-on-surface break-words">
             {match[4]}
           </code>
         );
       } else if (match[5] && match[6]) {
         parts.push(
-          <a key={`a-${match.index}`} href={match[6]} target="_blank" rel="noopener noreferrer" className="text-primary-accent hover:underline">
+          <a key={`a-${match.index}`} href={match[6]} target="_blank" rel="noopener noreferrer" className="text-primary-accent hover:underline break-words">
             {match[5]}
           </a>
         );
@@ -89,7 +89,7 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
       flushList();
       if (inCodeBlock) {
         elements.push(
-          <pre key={`code-${i}`} className="font-mono text-sm bg-on-surface text-white p-6 rounded-lg my-6 overflow-x-auto">
+          <pre key={`code-${i}`} className="font-mono text-sm bg-on-surface text-white p-6 rounded-lg my-6 overflow-x-auto max-w-full">
             <code>{codeLines.join('\n')}</code>
           </pre>
         );
@@ -181,7 +181,7 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
           r.split('|').filter(c => c.trim() !== '').map(c => c.trim())
         );
         elements.push(
-          <div key={`table-${i}`} className="overflow-x-auto my-6">
+          <div key={`table-${i}`} className="overflow-x-auto my-6 max-w-full">
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr className="border-b-2 border-on-surface">
@@ -213,7 +213,7 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
     if (/^[-*] /.test(line)) {
       if (!inList) inList = true;
       listItems.push(
-        <li key={`li-${i}`}>{processInline(line.replace(/^[-*] /, ''))}</li>
+        <li key={`li-${i}`} className="break-words">{processInline(line.replace(/^[-*] /, ''))}</li>
       );
       i++;
       continue;
@@ -224,7 +224,7 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
       const olItems: React.ReactNode[] = [];
       while (i < lines.length && /^\d+\.\s/.test(lines[i])) {
         olItems.push(
-          <li key={`oli-${i}`}>{processInline(lines[i].replace(/^\d+\.\s/, ''))}</li>
+          <li key={`oli-${i}`} className="break-words">{processInline(lines[i].replace(/^\d+\.\s/, ''))}</li>
         );
         i++;
       }
@@ -244,7 +244,7 @@ export function renderMarkdown(body: string, onWikilink?: (slug: string) => void
     }
 
     elements.push(
-      <p key={`p-${i}`} className="leading-relaxed my-4">
+      <p key={`p-${i}`} className="leading-relaxed my-4 break-words">
         {processInline(line)}
       </p>
     );
