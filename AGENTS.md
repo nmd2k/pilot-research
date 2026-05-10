@@ -1,12 +1,11 @@
 # AGENTS.md
 
-Contributions are welcome. Quality standards are high.
+Contributions are welcome.
 
 ## Requirements
 
-- Skill changes must work across all supported platforms (OpenCode, Claude Code, Cursor, Codex)
-- Template changes must maintain wikilink consistency — every `[[link]]` must resolve
-- New skills must include a SKILL.md and at least one template
+- Skill changes are designed to work across these platforms: OpenCode, Claude Code, Cursor, Codex.
+- Template changes must maintain wiki link consistency — every `[[link]]` must resolve
 - Test with the dummy project (`tests/dummy-project/`) before submitting
 
 ## What will not be accepted

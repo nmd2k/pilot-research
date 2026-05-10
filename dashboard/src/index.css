@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800;900&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Hanken Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-mono: "Geist", "JetBrains Mono", ui-monospace, monospace;
+
+  --color-primary: #0f172a;
+  --color-primary-accent: #3b82f6;
+  
+  --color-surface: #f1f5f9;
+  --color-surface-bright: #ffffff;
+  --color-surface-dim: #e2e8f0;
+  
+  --color-on-surface: #1e293b;
+  --color-on-surface-variant: #64748b;
+  
+  --color-outline: #e2e8f0;
+  --color-outline-variant: #cbd5e1;
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-sans antialiased;
+    min-height: 100dvh;
+  }
+}
+
+@layer utilities {
+  .code-canvas {
+    background-image: radial-gradient(#cbd5e1 0.7px, transparent 0.7px);
+    background-size: 24px 24px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-outline-variant rounded-full;
+  }
+}

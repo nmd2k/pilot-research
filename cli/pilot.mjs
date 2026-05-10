@@ -12,12 +12,12 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const SUBDIRS = ['papers', 'entities', 'concepts', 'queries', 'plans', 'experiments', 'handoff'];
 
 const TYPE_MAP = {
-  paper: { dir: 'papers', template: 'skills/literature-review/paper-summary-template.md' },
-  entity: { dir: 'entities', template: 'skills/literature-review/entity-template.md' },
-  concept: { dir: 'concepts', template: 'skills/literature-review/concept-template.md' },
-  query: { dir: 'queries', template: 'skills/literature-review/query-result-template.md' },
-  plan: { dir: 'plans', template: 'skills/brainstorming/research-plan-template.md' },
-  experiment: { dir: 'experiments', template: 'skills/execute-research/experiment-design-template.md' },
+  paper: { dir: 'papers', template: 'skills/pilot-literature/paper-summary-template.md' },
+  entity: { dir: 'entities', template: 'skills/pilot-literature/entity-template.md' },
+  concept: { dir: 'concepts', template: 'skills/pilot-literature/concept-template.md' },
+  query: { dir: 'queries', template: 'skills/pilot-literature/query-result-template.md' },
+  plan: { dir: 'plans', template: 'skills/pilot-brainstorm/research-plan-template.md' },
+  experiment: { dir: 'experiments', template: 'skills/pilot-execute/experiment-design-template.md' },
 };
 
 const RESET = '\x1b[0m';
@@ -320,11 +320,25 @@ function cmdDashboard(args) {
     else if (args[i] === '--help') { printDashboardHelp(); return; }
   }
 
-  console.log(`${CYAN}Dashboard coming soon.${RESET}`);
-  console.log(`  Will be available at http://localhost:${port}`);
-  console.log(`  Launch flag: ${launch ? 'yes' : 'no'}`);
-  console.log('');
-  console.log('See P10 in the backlog for implementation details.');
+  const dashboardPath = path.join(PROJECT_ROOT, 'dashboard');
+  const serverModule = path.join(dashboardPath, 'server.mjs');
+
+  if (!fs.existsSync(serverModule)) {
+    log('error', 'Dashboard server not found. Make sure you are running from the pilot-research project root.');
+    process.exit(1);
+  }
+
+  const config = readConfig(process.cwd());
+  const wikiPath = config.wiki_path
+    ? path.resolve(config.wiki_path)
+    : findWikiDir(process.cwd());
+
+  import(serverModule).then(mod => {
+    mod.startServer({ wikiDir: wikiPath || undefined, port, launch });
+  }).catch(err => {
+    log('error', `Failed to start dashboard: ${err.message}`);
+    process.exit(1);
+  });
 }
 
 function printHelp() {

@@ -39,7 +39,7 @@ escape_for_json() {
 
 body_escaped=$(escape_for_json "$body_content")
 
-preamble="You have pilot-research.\n\n**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load \"using-pilot-research\" again - that would be redundant.**\n\n"
+preamble="You have pilot-research.\n\n**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you do not need to load it again.**\n\n"
 tool_mapping="\n\n**Tool Mapping for OpenCode:**\\nWhen skills reference tools you don't have, substitute OpenCode equivalents:\\n- \`TodoWrite\` → \`todowrite\`\\n- \`Task\` tool with subagents → Use OpenCode's subagent system (@mention)\\n- \`Skill\` tool → OpenCode's native \`skill\` tool\\n- \`Read\`, \`Write\`, \`Edit\`, \`Bash\` → Your native tools\\n\\nUse OpenCode's native \`skill\` tool to list and load skills."
 
 session_context="<EXTREMELY_IMPORTANT>\n${preamble}${body_escaped}${tool_mapping}\n</EXTREMELY_IMPORTANT>"
