@@ -33,7 +33,7 @@ function Skeleton() {
       <div className="h-14 flex items-center justify-end px-6 border-b border-outline shrink-0">
         <div className="w-6 h-6 rounded bg-surface-dim animate-pulse" />
       </div>
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-8">
         <SkeletonBlock className="h-8 w-3/4 mb-6" />
         <div className="flex flex-wrap gap-4 mb-8 pt-4 border-t border-outline">
           <SkeletonBlock className="h-3 w-24" />
@@ -149,7 +149,7 @@ export default function SplitEditor({ title: initialTitle = '', content: initial
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.15 }}
-      className="h-full bg-surface-bright border-l border-outline flex flex-col"
+      className="h-full w-full bg-surface-bright border-l border-outline flex flex-col min-w-0"
     >
       <div className="h-14 flex items-center justify-between px-6 border-b border-outline shrink-0">
         <div className="flex items-center gap-2">
@@ -197,8 +197,8 @@ export default function SplitEditor({ title: initialTitle = '', content: initial
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-        <div className="mb-8">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-8">
+        <div className="mb-8 select-text">
           {viewMode === 'rendered' && !editMode && (
             <h1 className="w-full bg-transparent border-none focus:ring-0 focus:outline-none text-2xl font-bold text-on-surface leading-tight tracking-tight uppercase">
               {title}
@@ -244,16 +244,16 @@ export default function SplitEditor({ title: initialTitle = '', content: initial
           )}
         </div>
 
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col min-h-0">
           {editMode ? (
             <textarea
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
-              className="w-full h-[600px] bg-transparent border border-outline rounded-lg p-6 focus:outline-none focus:ring-1 focus:ring-primary-accent/30 font-mono text-sm text-on-surface-variant resize-none custom-scrollbar"
+              className="flex-1 w-full min-h-[600px] bg-transparent border-0 p-0 focus:outline-none focus:ring-0 font-mono text-sm text-on-surface-variant resize-none custom-scrollbar select-text"
               placeholder="Start writing..."
             />
           ) : (
-            <div className="prose prose-sm max-w-none">
+            <div className="prose prose-sm max-w-none break-words w-full overflow-hidden select-text">
               {content ? renderMarkdown(content, handleWikilink) : (
                 <p className="text-on-surface-variant italic">No content</p>
               )}

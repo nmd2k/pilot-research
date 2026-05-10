@@ -515,7 +515,7 @@ x={p.x + (NODE_RADIUS + 6 / zoomRef.current)}
                     )}
 
                     {pageData.body && (
-                      <div className="prose prose-sm max-w-none text-[14px]">
+                      <div className="prose prose-sm max-w-none text-[14px] select-text break-words overflow-hidden w-full">
                         {renderMarkdown(pageData.body.slice(0, 800))}
                         {pageData.body.length > 800 ? <p className="text-on-surface-variant mt-2 italic">…</p> : null}
                       </div>

@@ -166,7 +166,7 @@ export default function TasksView() {
             animate={{ width: 440, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.2 }}
-            className="h-full flex overflow-hidden shrink-0"
+            className="h-full flex overflow-hidden shrink-0 min-w-0"
           >
             <SplitEditor
               key={selectedTask.filePath || selectedTask.id}

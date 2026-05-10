@@ -270,6 +270,7 @@ export function buildFileTree(wikiDir) {
 
     const entries = fs.readdirSync(dirPath).sort();
     for (const entry of entries) {
+      if (entry === '.gitkeep') continue;
       const entryPath = path.join(dirPath, entry);
       const entryRelPath = relPath === 'root' ? entry : `${relPath}/${entry}`;
       const entryStat = fs.statSync(entryPath);

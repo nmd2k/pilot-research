@@ -358,7 +358,7 @@ export default function ArtifactsView() {
                   </div>
 
                   {activeContent.frontmatter && (
-                    <div className="mb-8">
+                    <div className="mb-8 select-text">
                       <h2 className="font-sans text-3xl font-black text-black leading-tight tracking-tight uppercase">
                         {activeContent.frontmatter.title || activeTab?.name}
                       </h2>
@@ -386,16 +386,16 @@ export default function ArtifactsView() {
                   )}
 
                   {editMode ? (
-                    <div className="flex-1">
+                    <div className="flex-1 flex flex-col min-h-0">
                       <textarea
                         value={editContent}
                         onChange={(e) => setEditContent(e.target.value)}
-                        className="w-full h-[600px] bg-transparent border border-outline rounded-lg p-6 focus:outline-none focus:ring-1 focus:ring-primary-accent/30 font-mono text-sm text-on-surface-variant resize-none custom-scrollbar"
+                        className="flex-1 w-full min-h-[600px] bg-transparent border-0 p-0 focus:outline-none focus:ring-0 font-mono text-sm text-on-surface-variant resize-none custom-scrollbar select-text"
                         placeholder="Edit content..."
                       />
                     </div>
                   ) : activeContent.body ? (
-                    <section className="font-serif text-[18px] text-on-surface-variant leading-relaxed">
+                    <section className="font-serif text-[18px] text-on-surface-variant leading-relaxed select-text w-full overflow-hidden break-words">
                       {renderMarkdown(activeContent.body, handleWikilink)}
                     </section>
                   ) : (
