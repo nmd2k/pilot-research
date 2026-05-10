@@ -123,6 +123,13 @@ The dashboard server exposes a REST API at `http://localhost:4213/api/`:
 | `GET /api/search?q=...` | Full-text search                                 |
 | `GET /api/stats`        | Page counts, latest handoff, backlog summary     |
 
+## Uninstallation
+
+To completely remove the CLI, plugins, global rules, and all pilot skills from your configured AI agents, run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.sh | bash -s -- --uninstall
+```
 
 ## Contributing
 
