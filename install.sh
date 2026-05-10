@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="OWNER/pilot-research"
+REPO="${PILOT_REPO:-nmd2k/pilot-research}"
 RAW_BASE="https://raw.githubusercontent.com/$REPO/main"
 
 DRY=0
@@ -25,13 +25,13 @@ pilot-research installer — detects your AI coding agents and installs pilot-re
 USAGE
   install.sh [flags]
 
-  curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash
-  curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash -s -- --all
+  curl -fsSL https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.sh | bash -s -- --all
 
 FLAGS
   --dry-run         Print what would run, do nothing.
   --force           Re-run even if already installed.
-  --only <agent>    Install only for the named agent. Repeatable.
+  --only <agent>    Install only for the named agent. Repeatable (skips auto-detection).
   --minimal         Just the skill files and plugin manifests. No CLI, no rule files.
   --all             Install everything: plugins + CLI + per-repo rule files.
   --list            Print supported agents and exit.
@@ -149,24 +149,100 @@ if [ -f "$SCRIPT_DIR/install.sh" ] && [ -d "$SCRIPT_DIR/skills" ]; then
   LOCAL_REPO="$SCRIPT_DIR"
 fi
 
-copy_skill_files() {
-  local dest="$1"
+PILOT_SKILL_NAMES=(
+  using-pilot-research
+  pilot-brainstorm
+  pilot-literature
+  pilot-execute
+  pilot-write-paper
+  pilot-peer-review
+)
+
+# Resolved once per run: absolute path to repo `skills/` tree (each child is one skill dir).
+SKILLS_SRC=""
+REMOTE_SKILLS_TMP=""
+
+config_home() {
+  printf '%s' "${XDG_CONFIG_HOME:-$HOME/.config}"
+}
+
+prepare_skills_source() {
+  SKILLS_SRC=""
   if [ -n "$LOCAL_REPO" ]; then
-    cp -R "$LOCAL_REPO/skills" "$dest/skills"
-  else
-    if has curl; then
-      mkdir -p "$dest/skills"
-      local tmp
-      tmp="$(mktemp -d)"
-      curl -fsSL "$RAW_BASE/skills/using-pilot-research/SKILL.md" -o "$tmp/SKILL.md" 2>/dev/null || true
-      if [ -f "$tmp/SKILL.md" ]; then
-        mkdir -p "$dest/skills/using-pilot-research"
-        cp "$tmp/SKILL.md" "$dest/skills/using-pilot-research/"
-      fi
-      rm -rf "$tmp"
-    fi
+    SKILLS_SRC="$LOCAL_REPO/skills"
+    return 0
+  fi
+  if [ "$DRY" = 1 ]; then
+    note "  dry-run: skipping skills tarball download"
+    return 1
+  fi
+  if ! has curl; then
+    warn "curl not found; cannot download skill files"
+    return 1
+  fi
+  REMOTE_SKILLS_TMP="$(mktemp -d)"
+  local tarball="$REMOTE_SKILLS_TMP/repo.tgz"
+  if ! curl -fsSL "https://codeload.github.com/$REPO/tar.gz/main" -o "$tarball"; then
+    warn "failed to download repository tarball for skills"
+    rm -rf "$REMOTE_SKILLS_TMP"
+    REMOTE_SKILLS_TMP=""
+    return 1
+  fi
+  if ! tar -xzf "$tarball" -C "$REMOTE_SKILLS_TMP" 2>/dev/null; then
+    warn "failed to extract repository tarball"
+    rm -rf "$REMOTE_SKILLS_TMP"
+    REMOTE_SKILLS_TMP=""
+    return 1
+  fi
+  local extracted
+  extracted="$(find "$REMOTE_SKILLS_TMP" -maxdepth 1 -mindepth 1 -type d ! -name '.*' | head -1)"
+  if [ -z "$extracted" ] || [ ! -d "$extracted/skills" ]; then
+    warn "unexpected archive layout (missing skills/)"
+    rm -rf "$REMOTE_SKILLS_TMP"
+    REMOTE_SKILLS_TMP=""
+    return 1
+  fi
+  SKILLS_SRC="$extracted/skills"
+  return 0
+}
+
+cleanup_remote_skills_tmp() {
+  if [ -n "${REMOTE_SKILLS_TMP:-}" ] && [ -d "${REMOTE_SKILLS_TMP:-}" ]; then
+    rm -rf "$REMOTE_SKILLS_TMP"
+    REMOTE_SKILLS_TMP=""
   fi
 }
+
+sync_pilot_skills_to() {
+  local dest_base="$1"
+  if [ -z "${SKILLS_SRC:-}" ] || [ ! -d "${SKILLS_SRC:-}" ]; then
+    warn "  skill sync skipped (no skills source)"
+    return 1
+  fi
+  run mkdir -p "$dest_base"
+  local name
+  for name in "${PILOT_SKILL_NAMES[@]}"; do
+    if [ ! -d "$SKILLS_SRC/$name" ]; then
+      warn "  missing skill in source: $name"
+      continue
+    fi
+    run rm -rf "$dest_base/$name"
+    run mkdir -p "$dest_base/$name"
+    run cp -R "$SKILLS_SRC/$name/." "$dest_base/$name/"
+  done
+  return 0
+}
+
+remove_legacy_nested_opencode_skills() {
+  local legacy="$HOME/.opencode/skills/skills"
+  if [ -d "$legacy" ]; then
+    note "  removing legacy nested OpenCode skills dir: $legacy"
+    if [ "$DRY" = 1 ]; then note "  would run: rm -rf \"$legacy\""; return 0; fi
+    rm -rf "$legacy"
+  fi
+}
+
+trap cleanup_remote_skills_tmp EXIT
 
 INSTALLED=()
 SKIPPED=()
@@ -175,33 +251,25 @@ FAILED=()
 install_claude() {
   say "→ Claude Code detected"
   local target_dir="$HOME/.claude-plugin/pilot-research"
-  
-  if [ "$FORCE" = 0 ] && [ -d "$target_dir" ]; then
-    note "  pilot-research already installed for Claude Code (use --force to reinstall)"
-    SKIPPED+=("claude:already-installed")
-    return 0
-  fi
-
-  run mkdir -p "$target_dir"
-  
-  local plugin_json
-  plugin_json='{
-  "name": "pilot-research",
-  "description": "Research workflow skills for coding agents",
-  "version": "0.1.0",
-  "author": { "name": "Pilot Research Contributors" },
-  "homepage": "https://github.com/OWNER/pilot-research",
-  "repository": "https://github.com/OWNER/pilot-research",
-  "license": "MIT",
-  "keywords": ["research", "pilot-literature", "pilot-brainstorm", "pilot-peer-review", "skills"]
-}'
-  
-  echo "$plugin_json" | run tee "$target_dir/plugin.json" > /dev/null
-  
   run mkdir -p "$target_dir/hooks"
-  
-  local hooks_json
-  hooks_json='{
+
+  local gh_home="https://github.com/$REPO"
+  if [ "$FORCE" = 1 ] || [ ! -f "$target_dir/plugin.json" ]; then
+    local plugin_json
+    plugin_json="$(printf '%s\n' '{' \
+      '"name": "pilot-research",' \
+      '"description": "Research workflow skills for coding agents",' \
+      '"version": "0.1.0",' \
+      '"author": { "name": "Pilot Research Contributors" },' \
+      "\"homepage\": \"$gh_home\"," \
+      "\"repository\": \"$gh_home\"," \
+      '"license": "MIT",' \
+      '"keywords": ["research", "pilot-literature", "pilot-brainstorm", "pilot-peer-review", "skills"]' \
+      '}')"
+    echo "$plugin_json" | run tee "$target_dir/plugin.json" > /dev/null
+
+    local hooks_json
+    hooks_json='{
   "hooks": {
     "SessionStart": [
       {
@@ -211,57 +279,61 @@ install_claude() {
     ]
   }
 }'
-  echo "$hooks_json" | run tee "$target_dir/hooks/hooks.json" > /dev/null
-
-  if [ -n "$LOCAL_REPO" ]; then
-    run cp "$LOCAL_REPO/hooks/session-start" "$target_dir/hooks/session-start"
-    run cp -R "$LOCAL_REPO/skills" "$target_dir/skills"
+    echo "$hooks_json" | run tee "$target_dir/hooks/hooks.json" > /dev/null
   else
-    if has curl; then
+    note "  Claude plugin.json already exists (use --force to refresh)"
+    SKIPPED+=("claude:plugin-present")
+  fi
+
+  if [ "$FORCE" = 1 ] || [ ! -f "$target_dir/hooks/session-start" ]; then
+    if [ -n "$LOCAL_REPO" ]; then
+      run cp "$LOCAL_REPO/hooks/session-start" "$target_dir/hooks/session-start"
+      run chmod +x "$target_dir/hooks/session-start"
+    elif has curl; then
       run mkdir -p "$target_dir/hooks"
       curl -fsSL "$RAW_BASE/hooks/session-start" -o "$target_dir/hooks/session-start" 2>/dev/null
       chmod +x "$target_dir/hooks/session-start"
-      copy_skill_files "$target_dir"
     else
-      warn "  curl not found; cannot download skill files remotely"
+      warn "  curl not found; cannot download session-start hook"
       FAILED+=("claude:curl-missing")
       return 1
     fi
   fi
 
-  ok "  pilot-research installed for Claude Code"
+  sync_pilot_skills_to "$target_dir/skills"
+  sync_pilot_skills_to "$HOME/.claude/skills"
+
+  ok "  pilot-research installed for Claude Code (~/.claude-plugin + ~/.claude/skills)"
   INSTALLED+=("claude")
 }
 
 install_opencode() {
   say "→ OpenCode detected"
   local target_dir="$HOME/.opencode/plugins"
-  
-  if [ "$FORCE" = 0 ] && [ -f "$target_dir/pilot-research.js" ]; then
-    note "  pilot-research already installed for OpenCode (use --force to reinstall)"
-    SKIPPED+=("opencode:already-installed")
-    return 0
-  fi
+  remove_legacy_nested_opencode_skills
 
   run mkdir -p "$target_dir"
-  
-  if [ -n "$LOCAL_REPO" ]; then
-    run cp "$LOCAL_REPO/.opencode/plugins/pilot-research.js" "$target_dir/pilot-research.js"
-  else
-    if has curl; then
-      curl -fsSL "$RAW_BASE/.opencode/plugins/pilot-research.js" -o "$target_dir/pilot-research.js" 2>/dev/null
+
+  if [ "$FORCE" = 1 ] || [ ! -f "$target_dir/pilot-research.js" ]; then
+    if [ -n "$LOCAL_REPO" ]; then
+      run cp "$LOCAL_REPO/.opencode/plugins/pilot-research.js" "$target_dir/pilot-research.js"
+    elif has curl; then
+      run curl -fsSL "$RAW_BASE/.opencode/plugins/pilot-research.js" -o "$target_dir/pilot-research.js"
     else
       warn "  curl not found"
       FAILED+=("opencode:curl-missing")
       return 1
     fi
+  else
+    note "  OpenCode pilot-research.js already present (use --force to reinstall)"
+    SKIPPED+=("opencode:plugin-present")
   fi
 
-  local skills_dir="$HOME/.opencode/skills"
-  run mkdir -p "$skills_dir"
-  copy_skill_files "$skills_dir"
+  local skills_root
+  skills_root="$(config_home)/opencode/skills"
+  sync_pilot_skills_to "$skills_root"
 
-  ok "  pilot-research installed for OpenCode"
+  ok "  pilot-research installed for OpenCode (plugin: ~/.opencode/plugins, skills: $skills_root)"
   INSTALLED+=("opencode")
 }
 
@@ -287,19 +359,21 @@ globs:
 alwaysApply: true
 ---
 
-You have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. Use the skill registry for: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review. All research artifacts go into `.research/` using wikilink conventions.'
+You have pilot-research skills installed under ~/.cursor/skills/. Follow the research workflow skills in your `.research/` wiki directory. Use the skill registry for: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review. All research artifacts go into `.research/` using wikilink conventions.'
 
-WINDSURF_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+WINDSURF_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
-CLINE_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+CLINE_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
-COPILOT_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions. Skills: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review.'
+COPILOT_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions. Skills: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review.'
 
-CODEX_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+CODEX_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.agents/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
 install_cursor() {
   say "→ Cursor detected"
-  write_rule_file ".cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
+  write_rule_file "$HOME/.cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
+  sync_pilot_skills_to "$HOME/.cursor/skills"
+  ok "  Cursor: rules → ~/.cursor/rules, skills → ~/.cursor/skills"
   INSTALLED+=("cursor")
 }
 
@@ -323,60 +397,107 @@ install_copilot() {
 
 install_codex() {
   say "→ Codex CLI detected"
-  write_rule_file ".codex/instructions.md" "$CODEX_RULE"
+  sync_pilot_skills_to "$HOME/.agents/skills"
+  write_rule_file "$HOME/.codex/instructions.md" "$CODEX_RULE"
+  ok "  Codex / Agents skills → ~/.agents/skills"
   INSTALLED+=("codex")
 }
 
 install_cli() {
   if [ "$MINIMAL" = 1 ]; then return 0; fi
-  
+
   say "→ Installing pilot CLI"
   local bin_dir="$HOME/.local/bin"
   run mkdir -p "$bin_dir"
-  
-  local arch
-  arch="$(uname -m)"
-  local os
-  os="$(uname -s)"
-  local binary_url=""
-  local binary_name="pilot"
-  
-  if [ "$os" = "Darwin" ]; then
-    if [ "$arch" = "arm64" ]; then
-      binary_url="$PILOT_CLI_URL_ARM64"
-    else
-      binary_url="$PILOT_CLI_URL_X64"
+
+  # 1) Installing from a repo checkout: thin wrapper → node cli/pilot.mjs (no prebuilt binary needed).
+  if [ -n "$LOCAL_REPO" ] && [ -f "$LOCAL_REPO/cli/pilot.mjs" ]; then
+    local wrapper="$bin_dir/pilot"
+    if [ "$DRY" = 1 ]; then
+      note "  would write $wrapper → node \"$LOCAL_REPO/cli/pilot.mjs\""
+      INSTALLED+=("cli")
+      return 0
     fi
-  elif [ "$os" = "Linux" ]; then
-    binary_url="$PILOT_CLI_URL_LINUX"
-  else
-    note "  CLI binary not available for $os. Install manually via: npm install -g pilot-research"
-    SKIPPED+=("cli:unsupported-os")
+    cat <<EOF > "${wrapper}.tmp"
+#!/usr/bin/env bash
+exec node "${LOCAL_REPO}/cli/pilot.mjs" "\$@"
+EOF
+    run mv "${wrapper}.tmp" "$wrapper"
+    run chmod +x "$wrapper"
+    ok "  pilot CLI → $wrapper (uses checkout at $LOCAL_REPO)"
+    INSTALLED+=("cli")
+    note "  Ensure $bin_dir is on your PATH."
     return 0
   fi
 
-  if has curl; then
-    note "  Downloading pilot CLI..."
-    if [ "$DRY" = 1 ]; then
-      note "  would download: $binary_url -> $bin_dir/pilot"
-    else
-      if curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
-        chmod +x "$bin_dir/pilot"
-        ok "  pilot CLI installed to $bin_dir/pilot"
-        INSTALLED+=("cli")
-        
-        note "  Make sure $bin_dir is in your PATH."
-        note "  You may need to add 'export PATH=\"$bin_dir:\$PATH\"' to your shell profile."
-      else
-        note "  Binary download not available yet. Install via: npm install -g pilot-research"
-        note "  Or use: node cli/pilot.mjs directly from the repo."
-        SKIPPED+=("cli:binary-not-available")
-      fi
-    fi
-  else
-    note "  curl not found. Install CLI manually via: npm install -g pilot-research"
-    SKIPPED+=("cli:curl-missing")
+  # 2) Optional future: single-file prebuilt binaries under cli/bin/ on GitHub.
+  local arch os binary_url=""
+  arch="$(uname -m)"
+  os="$(uname -s)"
+  if [ "$os" = "Darwin" ]; then
+    if [ "$arch" = "arm64" ]; then binary_url="$PILOT_CLI_URL_ARM64"; else binary_url="$PILOT_CLI_URL_X64"; fi
+  elif [ "$os" = "Linux" ]; then
+    binary_url="$PILOT_CLI_URL_LINUX"
   fi
+
+  if [ -n "$binary_url" ] && has curl; then
+    note "  Trying prebuilt pilot binary…"
+    if [ "$DRY" = 1 ]; then
+      note "  would download: $binary_url → $bin_dir/pilot"
+    elif curl -fsSL "$binary_url" -o "$bin_dir/pilot" 2>/dev/null; then
+      chmod +x "$bin_dir/pilot"
+      ok "  pilot CLI installed to $bin_dir/pilot"
+      INSTALLED+=("cli")
+      note "  Ensure $bin_dir is on your PATH."
+      return 0
+    fi
+  fi
+
+  # 3) npm global (registry, then GitHub) — ships CLI + dashboard assets.
+  if has npm; then
+    note "  Installing pilot CLI via npm (global)…"
+    if [ "$DRY" = 1 ]; then
+      note "  would run: npm install -g pilot-research || npm install -g github:${REPO}"
+      INSTALLED+=("cli")
+      return 0
+    fi
+    if npm install -g pilot-research; then
+      ok "  pilot CLI installed via npm (package: pilot-research)"
+      INSTALLED+=("cli")
+      return 0
+    fi
+    if npm install -g "github:${REPO}"; then
+      ok "  pilot CLI installed via npm (github:${REPO})"
+      INSTALLED+=("cli")
+      return 0
+    fi
+    note "  npm global install failed (permissions, offline, or registry). Try: npm install -g github:${REPO}"
+  else
+    note "  npm not found."
+  fi
+
+  # 4) Last resort: launcher that delegates to npx (no global install; slower cold start).
+  if has npx && has node; then
+    local wrap="$bin_dir/pilot"
+    if [ "$DRY" = 1 ]; then
+      note "  would write npx launcher → $wrap (github:${REPO})"
+      SKIPPED+=("cli:would-use-npx-launcher")
+      return 0
+    fi
+    cat <<EOF > "${wrap}.tmp"
+#!/usr/bin/env sh
+exec npx --yes --package="github:${REPO}" pilot "\$@"
+EOF
+    run mv "${wrap}.tmp" "$wrap"
+    run chmod +x "$wrap"
+    ok "  pilot launcher → $wrap (npx + github:${REPO}; first run may download)"
+    INSTALLED+=("cli")
+    note "  Ensure $bin_dir is on your PATH."
+    return 0
+  fi
+
+  warn "  Could not install pilot CLI. Install manually: npm install -g github:${REPO}"
+  SKIPPED+=("cli:install-failed")
 }
 
 echo
@@ -385,6 +506,8 @@ note "  $REPO"
 if [ "$DRY" = 1 ]; then note "  (dry run — nothing will be written)"; fi
 echo
 
+prepare_skills_source || note "  Continuing without a downloaded skills tree (local install only may still work)."
+
 i=0
 total=${#PROVIDER_IDS[@]}
 while [ $i -lt "$total" ]; do
@@ -392,7 +515,15 @@ while [ $i -lt "$total" ]; do
   label="${PROVIDER_LABELS[$i]}"
   detect_spec="${PROVIDER_DETECT[$i]}"
   
-  if want "$id" && detect_match "$detect_spec"; then
+  run_install=0
+  if want "$id"; then
+    if [ ${#ONLY[@]} -gt 0 ]; then
+      run_install=1
+    elif detect_match "$detect_spec"; then
+      run_install=1
+    fi
+  fi
+  if [ "$run_install" = 1 ]; then
     case "$id" in
       claude)  install_claude ;;
       opencode) install_opencode ;;
@@ -407,13 +538,11 @@ while [ $i -lt "$total" ]; do
 done
 
 if [ "$ALL" = 1 ]; then
-  if want "cursor" && [ ! -f ".cursor/rules/pilot-research.mdc" ]; then
-    say "→ Writing per-repo rule files (--all)"
-    write_rule_file ".cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
-    write_rule_file ".windsurf/rules/pilot-research.md" "$WINDSURF_RULE"
-    write_rule_file ".clinerules/pilot-research.md" "$CLINE_RULE"
-    write_rule_file ".github/copilot-instructions.md" "$COPILOT_RULE"
-  fi
+  say "→ Writing per-repo rule files (--all)"
+  write_rule_file ".cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
+  write_rule_file ".windsurf/rules/pilot-research.md" "$WINDSURF_RULE"
+  write_rule_file ".clinerules/pilot-research.md" "$CLINE_RULE"
+  write_rule_file ".github/copilot-instructions.md" "$COPILOT_RULE"
 fi
 
 install_cli

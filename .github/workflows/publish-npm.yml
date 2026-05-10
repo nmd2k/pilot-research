@@ -1,0 +1,51 @@
+name: Publish npm
+
+# Real publish: push a semver git tag after bumping "version" in package.json (e.g. v0.2.0).
+# Repo secret: NPM_TOKEN — npm "Automation" token (Settings → Secrets → Actions).
+#
+# Manual "Run workflow" only validates and runs npm publish --dry-run (no secret required).
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install (root)
+        run: npm ci
+
+      - name: Test (root)
+        run: npm test
+
+      - name: Dashboard — install, test, build
+        working-directory: dashboard
+        run: |
+          npm ci
+          npm test
+          npm run build
+
+      - name: Publish to npm (tag releases only)
+        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish dry-run (manual workflow only)
+        if: github.event_name == 'workflow_dispatch'
+        run: npm publish --dry-run --access public

@@ -318,6 +318,14 @@ describe('mapStatusToKanban', () => {
     expect(mapStatusToKanban('running')).toBe('pending');
   });
 
+  it('maps pending to pending', () => {
+    expect(mapStatusToKanban('pending')).toBe('pending');
+  });
+
+  it('maps spaced in progress to pending', () => {
+    expect(mapStatusToKanban('In Progress')).toBe('pending');
+  });
+
   it('maps complete to done', () => {
     expect(mapStatusToKanban('complete')).toBe('done');
   });

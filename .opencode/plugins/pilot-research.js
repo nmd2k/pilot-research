@@ -1,8 +1,15 @@
 import path from 'path';
 import fs from 'fs';
+import os from 'node:os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+/** Matches install.sh: $(XDG_CONFIG_HOME|-~/.config)/opencode/skills */
+function opencodePilotSkillsRoot() {
+  const configHome = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
+  return path.join(configHome, 'opencode', 'skills');
+}
 
 const extractAndStripFrontmatter = (content) => {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
@@ -27,7 +34,7 @@ const extractAndStripFrontmatter = (content) => {
 let _bootstrapCache = undefined;
 
 export default async ({ client, directory }) => {
-  const pilotResearchSkillsDir = path.resolve(__dirname, '../../skills');
+  const pilotResearchSkillsDir = opencodePilotSkillsRoot();
 
   const getBootstrapContent = () => {
     if (_bootstrapCache !== undefined) return _bootstrapCache;

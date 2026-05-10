@@ -157,9 +157,9 @@ export function getPageByTypeSlug(parsed, type, slug) {
 }
 
 export function mapStatusToKanban(status) {
-  const s = (status || '').toLowerCase().trim();
+  const s = (status || '').toLowerCase().trim().replace(/\s+/g, '-');
   if (s === '' || s === 'draft' || s === 'todo') return 'todo';
-  if (s === 'in-progress' || s === 'running') return 'pending';
+  if (s === 'pending' || s === 'in-progress' || s === 'running') return 'pending';
   if (s === 'complete' || s === 'done') return 'done';
   if (s === 'archive') return 'archive';
   return 'todo';
@@ -211,41 +211,61 @@ export function getTasks(parsed) {
   }
 
   for (const page of parsed.pages) {
-    if (page.body) {
-      const tableTasks = parseBacklogTable(page.body);
-      for (const row of tableTasks) {
-        const linkSlugs = (row.links || '').split(/,\s*/).filter(Boolean).map(l => {
-          const m = l.match(/\[\[([^\]]+)\]\]/);
-          return m ? m[1] : l.trim();
-        });
+    if (!page.body) continue;
 
-        let linkedFilePath = page.filePath;
-        for (const slug of linkSlugs) {
-          const linked = pageMap.get(slug);
-          if (linked) {
-            linkedFilePath = linked.filePath;
-            break;
-          }
+    const tableTasks = parseBacklogTable(page.body);
+
+    for (const row of tableTasks) {
+      const linkSlugs = (row.links || '').split(/,\s*/).filter(Boolean).map(l => {
+        const m = l.match(/\[\[([^\]]+)\]\]/);
+        return m ? m[1] : l.trim();
+      });
+
+      let linkedFilePath = page.filePath;
+      for (const slug of linkSlugs) {
+        const linked = pageMap.get(slug);
+        if (linked) {
+          linkedFilePath = linked.filePath;
+          break;
         }
-
-        const desc = row.description || '';
-        const taskTitle = row.task || '';
-        const description = desc || (taskTitle.length > 100 ? taskTitle : '');
-
-        tasks.push({
-          id: row.id || `backlog-${page.slug}-${tasks.length}`,
-          title: taskTitle,
-          description,
-          category: page.frontmatter.category || 'backlog',
-          status: mapStatusToKanban(row.status || ''),
-          assignee: row.assignee || '',
-          date: page.date,
-          dependsOn: row.depends_on || row['depends on'] || '',
-          links: linkSlugs,
-          filePath: linkedFilePath,
-          tags: page.tags,
-        });
       }
+
+      const desc = row.description || '';
+      const taskTitle = row.task || '';
+      const description = desc || (taskTitle.length > 100 ? taskTitle : '');
+
+      tasks.push({
+        id: row.id || `backlog-${page.slug}-${tasks.length}`,
+        title: taskTitle,
+        description,
+        category: page.frontmatter.category || 'backlog',
+        status: mapStatusToKanban(row.status || ''),
+        assignee: row.assignee || '',
+        date: page.date,
+        dependsOn: row.depends_on || row['depends on'] || '',
+        links: linkSlugs,
+        filePath: linkedFilePath,
+        tags: page.tags,
+      });
+    }
+
+    if (
+      tableTasks.length === 0 &&
+      (page.type === 'plan' || page.type === 'experiment')
+    ) {
+      tasks.push({
+        id: `${page.type}-${page.slug}`,
+        title: page.title,
+        description: '',
+        category: page.type,
+        status: mapStatusToKanban(page.status || ''),
+        assignee: page.frontmatter.assignee || '',
+        date: page.date,
+        dependsOn: '',
+        links: [],
+        filePath: page.filePath,
+        tags: page.tags,
+      });
     }
   }
 

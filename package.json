@@ -1,12 +1,49 @@
 {
   "name": "pilot-research",
   "version": "0.1.0",
+  "description": "Research workflow skills for coding agents: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, and pilot-peer-review",
+  "keywords": [
+    "research",
+    "pilot-literature",
+    "pilot-brainstorm",
+    "pilot-peer-review",
+    "skills"
+  ],
+  "homepage": "https://github.com/nmd2k/pilot-research#readme",
+  "bugs": {
+    "url": "https://github.com/nmd2k/pilot-research/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nmd2k/pilot-research.git"
+  },
+  "license": "MIT",
+  "author": "nmd2k",
   "type": "module",
   "main": ".opencode/plugins/pilot-research.js",
   "bin": {
-    "pilot": "./cli/pilot.mjs"
+    "pilot": "cli/pilot.mjs"
   },
-  "description": "Research workflow skills for coding agents: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, and pilot-peer-review",
-  "license": "MIT",
-  "keywords": ["research", "pilot-literature", "pilot-brainstorm", "pilot-peer-review", "skills"]
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "files": [
+    "cli/",
+    "skills/",
+    "dashboard/",
+    "wiki/",
+    "hooks/",
+    ".opencode/",
+    "install.sh",
+    "install.ps1",
+    "logo.png",
+    "README.md",
+    "AGENTS.md",
+    "CLAUDE.md"
+  ],
+  "scripts": {
+    "test": "node tests/benchmark-tokens.mjs && node tests/install-layout.mjs",
+    "prepack": "node --check cli/pilot.mjs && node --check .opencode/plugins/pilot-research.js"
+  }
 }
