@@ -3,15 +3,18 @@ export type View = 'papers' | 'tasks' | 'graph' | 'artifacts';
 export interface Paper {
   id: string;
   title: string;
-  authors: string;
+  authors?: string;
   date: string;
-  link: string;
-  category: string;
-  abstract: string;
+  link?: string;
+  category?: string;
+  abstract?: string;
   tags?: string[];
   status?: string;
   wikilinks?: string[];
   filePath?: string;
+  frontmatter?: Record<string, any>;
+  body?: string;
+  slug?: string;
 }
 
 export interface Task {

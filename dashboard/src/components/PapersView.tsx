@@ -143,20 +143,26 @@ export default function PapersView({ onOpenDetail }: PapersViewProps) {
                       </h3>
 
                       <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pt-2">
-                        <div className="flex items-center gap-1.5">
-                          <User size={14} className="text-on-surface-variant" />
-                          {paper.authors}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <Calendar size={14} className="text-on-surface-variant" />
-                          {paper.date}
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <LinkIcon size={14} className="text-on-surface-variant" />
-                          <a href={paper.link.startsWith('http') ? paper.link : `https://${paper.link}`} target="_blank" rel="noopener noreferrer" className="hover:text-black hover:underline transition-all">
-                            {paper.link}
-                          </a>
-                        </div>
+                        {paper.authors && (
+                          <div className="flex items-center gap-1.5">
+                            <User size={14} className="text-on-surface-variant" />
+                            {paper.authors}
+                          </div>
+                        )}
+                        {paper.date && (
+                          <div className="flex items-center gap-1.5">
+                            <Calendar size={14} className="text-on-surface-variant" />
+                            {paper.date}
+                          </div>
+                        )}
+                        {paper.link && (
+                          <div className="flex items-center gap-1.5">
+                            <LinkIcon size={14} className="text-on-surface-variant" />
+                            <a href={paper.link.startsWith('http') ? paper.link : `https://${paper.link}`} target="_blank" rel="noopener noreferrer" className="hover:text-black hover:underline transition-all">
+                              {paper.link.replace(/^https?:\/\//, '')}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <button

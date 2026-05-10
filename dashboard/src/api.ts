@@ -5,7 +5,25 @@ const BASE = '';
 export async function fetchPages(type?: string): Promise<{ pages: Paper[] }> {
   const url = type ? `${BASE}/api/pages?type=${encodeURIComponent(type)}` : `${BASE}/api/pages`;
   const res = await fetch(url);
-  return res.json();
+  const data = await res.json();
+  if (data.pages) {
+    data.pages = data.pages.map((p: any) => ({
+      id: p.filePath || `${p.type}-${p.slug}`,
+      title: p.title || p.slug || '',
+      authors: p.frontmatter?.authors || (Array.isArray(p.frontmatter?.authors) ? p.frontmatter.authors.join(', ') : '') || '',
+      date: p.date || p.frontmatter?.date_reviewed || p.frontmatter?.date || '',
+      link: p.frontmatter?.url || p.frontmatter?.arxiv_id ? `https://arxiv.org/abs/${p.frontmatter.arxiv_id}` : '',
+      category: (p.tags && p.tags.length > 0 ? p.tags[0].toUpperCase() : (p.type || '').toUpperCase()),
+      abstract: '',
+      tags: p.tags || [],
+      status: p.status || '',
+      wikilinks: p.wikilinks || [],
+      filePath: p.filePath || '',
+      frontmatter: p.frontmatter,
+      slug: p.slug,
+    }));
+  }
+  return data;
 }
 
 export async function fetchPage(path: string): Promise<{ page: PageData }> {
