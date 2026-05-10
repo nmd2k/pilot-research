@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  MoreVertical,
   Calendar,
-  Paperclip,
   History,
   CheckCircle2,
+  Loader2,
+  ArrowRight,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fetchTasks } from '../api';
@@ -21,7 +21,7 @@ const COLUMNS: { id: Task['status']; label: string }[] = [
 export default function TasksView() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     fetchTasks()
@@ -32,28 +32,30 @@ export default function TasksView() {
 
   const filtered = (status: Task['status']) => tasks.filter((t) => t.status === status);
 
-  const handleCardClick = (task: Task) => {
-    if (task.filePath) {
-      setSelectedFilePath(task.filePath);
-    }
-  };
+  const handleCardClick = useCallback((task: Task) => {
+    setSelectedTask(task);
+  }, []);
+
+  const handleCloseEditor = useCallback(() => {
+    setSelectedTask(null);
+  }, []);
 
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <span className="text-on-surface-variant text-sm">Loading tasks...</span>
+        <Loader2 className="animate-spin text-on-surface-variant" size={32} />
       </div>
     );
   }
 
   return (
     <div className="flex-1 flex flex-row overflow-hidden relative">
-      <div className={`${selectedFilePath ? '' : ''} flex-1 overflow-x-auto bg-surface p-10`}>
-        <div className="flex flex-row gap-8 h-full min-w-max">
+      <div className={`flex-1 overflow-y-auto overflow-x-auto bg-surface p-10 ${selectedTask ? 'hidden md:block' : ''}`}>
+        <div className="flex flex-row gap-8 h-min pb-4">
           {COLUMNS.map((column) => {
             const items = filtered(column.id);
             return (
-              <div key={column.id} className="w-[280px] flex flex-col gap-6">
+              <div key={column.id} className="w-[300px] flex flex-col gap-4 shrink-0">
                 <div className="flex items-center justify-between px-2 py-1">
                   <span className="font-bold text-[11px] uppercase text-on-surface-variant tracking-widest">{column.label}</span>
                   <span className="bg-surface-dim px-2 py-0.5 rounded text-[10px] text-on-surface font-bold">
@@ -61,77 +63,92 @@ export default function TasksView() {
                   </span>
                 </div>
 
-                <div className="flex-1 space-y-4 overflow-y-auto pr-1 flex flex-col custom-scrollbar">
+                <div className="space-y-3">
                   {column.id === 'archive' && items.length === 0 ? (
-                    <div className="h-full border border-dashed border-outline rounded-lg flex items-center justify-center text-on-surface-variant flex-col gap-4 p-8 bg-surface-bright/50">
-                      <div className="w-12 h-12 rounded bg-surface flex items-center justify-center">
-                        <History size={24} className="opacity-40" />
-                      </div>
-                      <span className="font-bold text-[10px] uppercase tracking-widest text-center opacity-40">Archive Storage</span>
+                    <div className="border border-dashed border-outline rounded-lg flex flex-col items-center justify-center py-8 px-6 bg-surface-bright/50">
+                      <History size={24} className="opacity-30 mb-3" />
+                      <span className="font-bold text-[10px] uppercase tracking-widest text-on-surface-variant opacity-50 text-center">Archive Storage</span>
                     </div>
                   ) : (
                     items.map((task) => (
-                      <motion.div
+                      <div
                         key={task.id}
-                        layoutId={`task-${task.id}`}
                         onClick={() => handleCardClick(task)}
-                        className={`bg-surface-bright border rounded-lg p-5 transition-all cursor-pointer group relative ${
+                        className={`bg-surface-bright border rounded-lg p-5 transition-all cursor-pointer ${
                           task.status === 'pending'
                             ? 'border-primary-accent shadow-lg shadow-primary-accent/5'
                             : 'border-outline hover:border-outline-variant hover:shadow-sm'
-                        } ${task.status === 'done' ? 'opacity-50 grayscale-[0.5]' : ''}`}
+                        } ${task.status === 'done' ? 'opacity-50 grayscale-[0.5]' : ''} ${
+                          selectedTask?.id === task.id ? 'ring-2 ring-primary-accent' : ''
+                        }`}
                       >
-                        <div className="flex justify-between items-start mb-4">
-                          <span className="font-bold text-[9px] uppercase px-2 py-0.5 rounded tracking-widest border border-outline bg-surface text-on-surface-variant">
-                            {task.category}
-                          </span>
-                          {task.status === 'pending' && (
+                        {task.category !== 'backlog' && (
+                          <div className="flex justify-between items-start mb-3">
+                            <span className="font-bold text-[9px] uppercase px-2 py-0.5 rounded tracking-widest border border-outline bg-surface text-on-surface-variant">
+                              {task.category}
+                            </span>
+                            {task.status === 'pending' && (
+                              <div className="flex items-center gap-1.5 bg-primary-accent/10 border border-primary-accent/20 px-2 py-0.5 rounded">
+                                <div className="w-1.5 h-1.5 bg-primary-accent rounded-full animate-pulse" />
+                                <span className="text-[9px] font-bold text-primary-accent uppercase tracking-widest">Active</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {task.category === 'backlog' && task.status === 'pending' && (
+                          <div className="flex justify-end items-start mb-3">
                             <div className="flex items-center gap-1.5 bg-primary-accent/10 border border-primary-accent/20 px-2 py-0.5 rounded">
                               <div className="w-1.5 h-1.5 bg-primary-accent rounded-full animate-pulse" />
                               <span className="text-[9px] font-bold text-primary-accent uppercase tracking-widest">Active</span>
                             </div>
-                          )}
-                        </div>
-
-                        <h3 className={`text-[14px] font-bold text-on-surface mb-2 leading-snug tracking-tight ${
-                          task.status === 'done' ? 'line-through decoration-on-surface-variant' : ''
-                        }`}>
-                          {task.title}
-                        </h3>
-
-                        {task.description && (
-                          <p className="text-[12px] text-on-surface-variant line-clamp-2 leading-relaxed mb-4 font-medium italic">
-                            {task.description}
-                          </p>
+                          </div>
                         )}
 
-                        <div className="flex items-center justify-between mt-auto pt-4 border-t border-outline">
+                        <h3 className={`text-[14px] font-bold text-on-surface mb-3 leading-snug tracking-tight ${
+                          task.status === 'done' ? 'line-through decoration-on-surface-variant' : ''
+                        }`}>
+                          {task.id}. {task.title}
+                        </h3>
+
+                        {task.links && task.links.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-3">
+                            {task.links.map((link) => (
+                              <span key={link} className="text-[9px] font-bold bg-primary-accent/10 text-primary-accent px-2 py-0.5 rounded">
+                                [[{link}]]
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-3 border-t border-outline">
                           {task.assignee ? (
                             <div className="w-6 h-6 rounded bg-black flex items-center justify-center text-[9px] font-bold text-white uppercase italic">
-                              {task.assignee}
+                              {task.assignee.slice(0, 2)}
                             </div>
                           ) : (
                             <div />
                           )}
 
-                          <div className="flex items-center gap-3 text-on-surface-variant">
-                            {task.date && (
-                              <div className="flex items-center gap-1.5">
-                                <Calendar size={12} />
-                                <span className="font-bold text-[9px] uppercase tracking-wider">{task.date}</span>
+                          <div className="flex items-center gap-2 text-on-surface-variant">
+                            {task.dependsOn && task.dependsOn !== '—' && (
+                              <div className="flex items-center gap-1">
+                                <ArrowRight size={10} className="opacity-50" />
+                                <span className="text-[9px] font-bold uppercase tracking-wider">{task.dependsOn}</span>
                               </div>
                             )}
-                            {task.status === 'done' ? (
-                              <CheckCircle2 size={12} className="text-primary-accent" />
-                            ) : task.attachments ? (
+                            {task.date && (
                               <div className="flex items-center gap-1">
-                                <Paperclip size={12} className="opacity-40" />
-                                <span className="text-[9px]">{task.attachments}</span>
+                                <Calendar size={11} />
+                                <span className="text-[9px] font-bold uppercase tracking-wider">{task.date}</span>
                               </div>
-                            ) : null}
+                            )}
+                            {task.status === 'done' && (
+                              <CheckCircle2 size={12} className="text-primary-accent" />
+                            )}
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     ))
                   )}
                 </div>
@@ -142,17 +159,21 @@ export default function TasksView() {
       </div>
 
       <AnimatePresence>
-        {selectedFilePath && (
+        {selectedTask && (
           <motion.div
+            key="task-editor"
             initial={{ width: 0, opacity: 0 }}
             animate={{ width: 440, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'tween', duration: 0.2 }}
-            className="h-full flex overflow-hidden"
+            className="h-full flex overflow-hidden shrink-0"
           >
             <SplitEditor
-              filePath={selectedFilePath}
-              onClose={() => setSelectedFilePath(null)}
+              key={selectedTask.filePath || selectedTask.id}
+              title={selectedTask.title}
+              content={selectedTask.description || ''}
+              filePath={selectedTask.filePath || undefined}
+              onClose={handleCloseEditor}
             />
           </motion.div>
         )}

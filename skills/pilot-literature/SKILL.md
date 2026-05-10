@@ -1,11 +1,39 @@
 ---
-name: literature-review
+name: pilot-literature
 description: "Use when researcher wants to find papers, read and summarize them, build or update the research wiki, or ask questions about the literature"
 ---
 
 # Literature Review
 
 This skill guides systematic literature search, reading, summarization, and wiki knowledge extraction.
+
+## <HARD-GATE>Mandatory Rules</HARD-GATE>
+
+These rules apply to every skill. Violating any of these blocks progress.
+
+1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
+
+2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
+
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+
+4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
+
+5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
+
+6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+
+## Research Wiki Structure
+
+All research content lives in `.research/` in the project root:
+
+- `papers/` — Paper summaries `[[paper-<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
+- `queries/` — Saved Q&A results `[[query-<topic>]]`
+- `plans/` — Research plans `[[plan-v<N>]]`
+- `experiments/` — Experiment reports `[[exp-<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -126,7 +154,7 @@ Summarize what was added/updated for the researcher:
 - [ ] List all new entities and concepts created
 - [ ] List all existing pages updated
 - [ ] Highlight key findings relevant to the research plan
-- [ ] Suggest next steps (e.g., invoke `pilot-research:brainstorming` to refine the plan based on findings)
+- [ ] Suggest next steps (e.g., invoke `pilot-research:pilot-brainstorm` to refine the plan based on findings)
 
 ## ArXiv Search Instructions
 
@@ -168,9 +196,9 @@ python scripts/arxiv-query.py --query "reinforcement learning" --categories cs.A
 ## Transitioning to Other Skills
 
 After completing literature review:
-- If findings suggest refining the research plan → invoke `pilot-research:brainstorming`
-- If ready to design experiments based on literature → invoke `pilot-research:execute-research`
-- If researcher wants feedback on the literature review → invoke `pilot-research:peer-review`
+- If findings suggest refining the research plan → invoke `pilot-research:pilot-brainstorm`
+- If ready to design experiments based on literature → invoke `pilot-research:pilot-execute`
+- If researcher wants feedback on the literature review → invoke `pilot-research:pilot-peer-review`
 
 <EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YYYY-MM-DD.md` before ending the session or transitioning to another skill.</EXTREMELY-IMPORTANT>
 

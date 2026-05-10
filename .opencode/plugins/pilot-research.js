@@ -53,7 +53,7 @@ Use OpenCode's native \`skill\` tool to list and load skills.`;
     _bootstrapCache = `<EXTREMELY_IMPORTANT>
 You have pilot-research.
 
-**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-pilot-research" again - that would be redundant.**
+**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you do not need to load it again.**
 
 ${content}
 

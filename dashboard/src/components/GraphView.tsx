@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Share2, Zap, LayoutGrid, Search, X, FileText } from 'lucide-react';
+import { Share2, ZoomIn, ZoomOut, Maximize2, FileText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fetchGraph, fetchPage } from '../api';
+import { renderMarkdown } from './MarkdownRenderer';
 import type { GraphNode, GraphEdge, PageData } from '../types';
 
 const TYPE_COLORS: Record<string, string> = {
@@ -132,14 +133,54 @@ export default function GraphView() {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
   const [pageData, setPageData] = useState<PageData | null>(null);
   const [pageLoading, setPageLoading] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoomTarget, setZoomTarget] = useState(1);
+  const [panTarget, setPanTarget] = useState({ x: 0, y: 0 });
+  const zoomRef = useRef(1);
+  const panRef = useRef({ x: 0, y: 0 });
+  const animFrameRef = useRef<number | null>(null);
+  const [renderTick, setRenderTick] = useState(0);
   const [typeFilter, setTypeFilter] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRefForSize = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const [dims, setDims] = useState({ w: 800, h: 600 });
+  const isDraggingRef = useRef(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const panStartRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    const el = containerRef.current;
+    let running = true;
+    const animate = () => {
+      if (!running) return;
+      let changed = false;
+      const dz = zoomTarget - zoomRef.current;
+      if (Math.abs(dz) > 0.001) {
+        zoomRef.current += dz * 0.15;
+        changed = true;
+      } else if (zoomRef.current !== zoomTarget) {
+        zoomRef.current = zoomTarget;
+        changed = true;
+      }
+      const dx = panTarget.x - panRef.current.x;
+      const dy = panTarget.y - panRef.current.y;
+      if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+        panRef.current = { x: panRef.current.x + dx * 0.15, y: panRef.current.y + dy * 0.15 };
+        changed = true;
+      } else if (panRef.current.x !== panTarget.x || panRef.current.y !== panTarget.y) {
+        panRef.current = { x: panTarget.x, y: panTarget.y };
+        changed = true;
+      }
+      if (changed) setRenderTick((t) => t + 1);
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+    animFrameRef.current = requestAnimationFrame(animate);
+    return () => {
+      running = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [zoomTarget, panTarget]);
+
+  useEffect(() => {
+    const el = containerRefForSize.current;
     if (!el) return;
     const obs = new ResizeObserver((entries) => {
       const { width, height } = entries[0].contentRect;
@@ -203,22 +244,60 @@ export default function GraphView() {
       (e) => filteredNodeIds.has(e.source) && filteredNodeIds.has(e.target)
     );
     setPositions(computeLayout(filteredNodes, filteredEdges));
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
+    setZoomTarget(1);
+    setPanTarget({ x: 0, y: 0 });
   }, [nodes, edges, typeFilter, computeLayout]);
 
   const handleRecenter = useCallback(() => {
-    setZoom(1);
-    setPan({ x: 0, y: 0 });
-  }, []);
-
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    setZoom((z) => Math.min(3, Math.max(0.2, z - e.deltaY * 0.001)));
+    setZoomTarget(1);
+    setPanTarget({ x: 0, y: 0 });
   }, []);
 
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(3, z + 0.2));
+    setZoomTarget((z) => Math.min(5, z + 0.3));
+  }, []);
+
+  const handleZoomOut = useCallback(() => {
+    setZoomTarget((z) => Math.max(0.2, z - 0.3));
+  }, []);
+
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const delta = e.deltaY > 0 ? -0.05 : 0.05;
+    setZoomTarget((z) => Math.min(5, Math.max(0.2, z + delta)));
+  }, []);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => { el.removeEventListener('wheel', handleWheel); };
+  }, [handleWheel]);
+
+  const handleCanvasMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    if (e.target instanceof SVGElement && (e.target as SVGElement).closest('.graph-node')) return;
+    isDraggingRef.current = true;
+    dragStartRef.current = { x: e.clientX, y: e.clientY };
+    panStartRef.current = { x: panRef.current.x, y: panRef.current.y };
+  }, []);
+
+  const handleCanvasMouseMove = useCallback((e: React.MouseEvent) => {
+    if (!isDraggingRef.current) return;
+    const dx = (e.clientX - dragStartRef.current.x) / zoomRef.current;
+    const dy = (e.clientY - dragStartRef.current.y) / zoomRef.current;
+    const newPan = { x: panStartRef.current.x + dx, y: panStartRef.current.y + dy };
+    setPanTarget(newPan);
+    panRef.current = newPan;
+  }, []);
+
+  const handleCanvasMouseUp = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  const handleCanvasMouseLeave = useCallback(() => {
+    isDraggingRef.current = false;
   }, []);
 
   const displayedNodes = useMemo(() => {
@@ -230,22 +309,6 @@ export default function GraphView() {
     const ids = new Set(displayedNodes.map((n) => n.id));
     return edges.filter((e) => ids.has(e.source) && ids.has(e.target));
   }, [displayedNodes, edges]);
-
-  const visibleItems = useMemo(() => {
-    if (zoom > 0.5) return { nodes: displayedNodes, edges: displayedEdges };
-    const vpLeft = -pan.x / zoom - 100;
-    const vpTop = -pan.y / zoom - 100;
-    const vpRight = vpLeft + dims.w / zoom + 200;
-    const vpBottom = vpTop + dims.h / zoom + 200;
-    const vn = displayedNodes.filter((n) => {
-      const p = positions.get(n.id);
-      if (!p) return false;
-      return p.x >= vpLeft && p.x <= vpRight && p.y >= vpTop && p.y <= vpBottom;
-    });
-    const ids = new Set(vn.map((n) => n.id));
-    const ve = displayedEdges.filter((e) => ids.has(e.source) && ids.has(e.target));
-    return { nodes: vn, edges: ve };
-  }, [displayedNodes, displayedEdges, positions, zoom, pan, dims]);
 
   const handleCloseEditor = useCallback(() => {
     setSelectedNode(null);
@@ -275,260 +338,262 @@ export default function GraphView() {
     );
   }
 
-  return (
-    <div className="flex-1 flex overflow-hidden">
-      <div
-        className={`flex-1 flex flex-col bg-surface overflow-hidden transition-all duration-300 ${selectedNode ? '' : ''}`}
-        ref={containerRef}
-      >
-        <div className="flex-1 code-canvas relative">
-          <div className="absolute top-6 left-8 z-10 space-y-1">
-            <h2 className="text-xl font-black text-black tracking-widest uppercase">Knowledge Graph</h2>
-            <p className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest">
-              Visualizing {displayedNodes.length} node{displayedNodes.length !== 1 ? 's' : ''}
-            </p>
-          </div>
+return (
+    <div
+      className="flex-1 code-canvas relative"
+      ref={(el) => { containerRefForSize.current = el; canvasRef.current = el; }}
+      onMouseDown={handleCanvasMouseDown}
+      onMouseMove={handleCanvasMouseMove}
+      onMouseUp={handleCanvasMouseUp}
+      onMouseLeave={handleCanvasMouseLeave}
+      style={{ cursor: isDraggingRef.current ? 'grabbing' : 'grab' }}
+    >
+      <div className="absolute top-4 left-4 z-10 space-y-1 max-w-[40%]">
+        <h2 className="text-lg font-black text-black tracking-widest uppercase truncate">Knowledge Graph</h2>
+<p className="text-on-surface-variant font-bold text-[10px] uppercase tracking-widest truncate">
+          {displayedNodes.length} node{displayedNodes.length !== 1 ? 's' : ''}
+        </p>
+      </div>
 
-          <div className="absolute top-6 right-8 z-10 flex gap-2">
-            {Object.entries(TYPE_COLORS).map(([type, color]) => (
-              <button
-                key={type}
-                onClick={() => setTypeFilter(typeFilter === type ? null : type)}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider border transition-all ${
-                  typeFilter === type
-                    ? 'bg-white shadow-sm border-outline-variant'
-                    : 'bg-white/50 border-transparent hover:bg-white hover:border-outline-variant'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-                {type}
-              </button>
-            ))}
-          </div>
+        <div className="absolute top-4 right-4 z-10 flex flex-wrap gap-1.5 max-w-[55%] justify-end">
+          {Object.entries(TYPE_COLORS).map(([type, color]) => (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(typeFilter === type ? null : type)}
+              className={`flex items-center gap-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border transition-all whitespace-nowrap ${
+                typeFilter === type
+                  ? 'bg-white shadow-sm border-outline-variant'
+                  : 'bg-white/60 backdrop-blur-sm border-transparent hover:bg-white hover:border-outline-variant'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+              {type}
+            </button>
+          ))}
+        </div>
 
-          <svg
-            className="w-full h-full"
-            viewBox={`${-pan.x} ${-pan.y} ${dims.w / zoom} ${dims.h / zoom}`}
-            onWheel={handleWheel}
-            style={{ cursor: 'grab' }}
-          >
-            <g>
-              {visibleItems.edges.map((edge, i) => {
-                const sp = positions.get(edge.source);
-                const tp = positions.get(edge.target);
-                if (!sp || !tp) return null;
-                return (
-                  <line
-                    key={`e-${i}`}
-                    x1={sp.x}
-                    y1={sp.y}
-                    x2={tp.x}
-                    y2={tp.y}
-                    stroke="#CBD5E1"
-                    strokeWidth={1 / zoom}
-                    opacity={0.5}
-                  />
-                );
-              })}
-            </g>
-            <g>
-              {visibleItems.nodes.map((node) => {
-                const p = positions.get(node.id);
-                if (!p) return null;
-                const color = TYPE_COLORS[node.type] || '#94a3b8';
-                const isSelected = selectedNode?.id === node.id;
-                return (
-                  <g
-                    key={node.id}
-                    className="cursor-pointer"
-                    onClick={() => handleNodeClick(node)}
-                  >
-                    {isSelected && (
-                      <circle
-                        cx={p.x}
-                        cy={p.y}
-                        r={NODE_RADIUS + 4 / zoom}
+        <svg
+          className="w-full h-full"
+          viewBox={`${-panRef.current.x} ${-panRef.current.y} ${dims.w / zoomRef.current} ${dims.h / zoomRef.current}`}
+        >
+          <g>
+            {displayedEdges.map((edge, i) => {
+              const sp = positions.get(edge.source);
+              const tp = positions.get(edge.target);
+              if (!sp || !tp) return null;
+              return (
+                <line
+                  key={`e-${i}`}
+                  x1={sp.x}
+                  y1={sp.y}
+                  x2={tp.x}
+                  y2={tp.y}
+                  stroke="#CBD5E1"
+                  strokeWidth={1 / zoomRef.current}
+                  opacity={0.5}
+                />
+              );
+            })}
+          </g>
+          <g>
+            {displayedNodes.map((node) => {
+              const p = positions.get(node.id);
+              if (!p) return null;
+              const color = TYPE_COLORS[node.type] || '#94a3b8';
+              const isSelected = selectedNode?.id === node.id;
+              return (
+                <g
+                  key={node.id}
+                  className="cursor-pointer graph-node"
+                  onClick={() => handleNodeClick(node)}
+                >
+                  {isSelected && (
+                    <circle
+                      cx={p.x}
+                      cy={p.y}
+r={NODE_RADIUS + 4 / zoomRef.current}
                         fill="none"
                         stroke={color}
-                        strokeWidth={2 / zoom}
-                        opacity={0.5}
-                      />
-                    )}
-                    <circle
-                      cx={p.x}
-                      cy={p.y}
-                      r={NODE_RADIUS / zoom > 4 ? NODE_RADIUS : NODE_RADIUS * (4 / NODE_RADIUS)}
+                        strokeWidth={2 / zoomRef.current}
+                      opacity={0.5}
+                    />
+                  )}
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+r={NODE_RADIUS / zoomRef.current > 4 ? NODE_RADIUS : NODE_RADIUS * (4 / NODE_RADIUS)}
                       fill={isSelected ? color : '#ffffff'}
                       stroke={color}
-                      strokeWidth={2 / zoom}
-                      style={{ transition: 'fill 0.15s' }}
-                    />
-                    <circle
-                      cx={p.x}
-                      cy={p.y}
-                      r={NODE_RADIUS * 0.45}
-                      fill={isSelected ? '#ffffff' : color}
-                      style={{ transition: 'fill 0.15s' }}
-                    />
-                    <text
-                      x={p.x + (NODE_RADIUS + 6 / zoom)}
-                      y={p.y + 4 / zoom}
-                      fontSize={11 / zoom}
-                      fontFamily="inherit"
-                      fontWeight={700}
-                      fill="#1e293b"
-                      className="pointer-events-none"
-                    >
-                      {node.title.length > MAX_LABEL_LEN
-                        ? node.title.slice(0, MAX_LABEL_LEN) + '…'
-                        : node.title}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          </svg>
-
-          <AnimatePresence>
-            {selectedNode && (
-              <motion.div
-                initial={{ opacity: 0, x: 40 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 40 }}
-                transition={{ type: 'tween', duration: 0.25 }}
-                className="absolute top-0 right-0 bottom-0 w-[380px] bg-white border-l border-outline shadow-2xl flex flex-col z-20"
-              >
-                <div className="flex items-center justify-between px-6 py-4 border-b border-outline shrink-0">
-                  <div className="flex items-center gap-2">
-                    <Share2 size={14} className="text-black" />
-                    <span className="font-black text-[9px] text-black uppercase tracking-widest">Node Detail</span>
-                  </div>
-                  <button
-                    onClick={handleCloseEditor}
-                    className="p-1 hover:bg-surface rounded transition-colors"
+                      strokeWidth={2 / zoomRef.current}
+                    style={{ transition: 'fill 0.15s' }}
+                  />
+                  <circle
+                    cx={p.x}
+                    cy={p.y}
+                    r={NODE_RADIUS * 0.45}
+                    fill={isSelected ? '#ffffff' : color}
+                    style={{ transition: 'fill 0.15s' }}
+                  />
+                  <text
+x={p.x + (NODE_RADIUS + 6 / zoomRef.current)}
+                      y={p.y + 4 / zoomRef.current}
+                      fontSize={11 / zoomRef.current}
+                    fontFamily="inherit"
+                    fontWeight={700}
+                    fill="#1e293b"
+                    className="pointer-events-none"
                   >
-                    <X size={16} className="text-on-surface-variant" />
-                  </button>
-                </div>
+                    {node.title.length > MAX_LABEL_LEN
+                      ? node.title.slice(0, MAX_LABEL_LEN) + '…'
+                      : node.title}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        </svg>
 
-                <div className="flex-1 overflow-auto custom-scrollbar p-6">
-                  {pageLoading ? (
-                    <div className="flex items-center justify-center py-12">
-                      <div className="w-6 h-6 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : pageData ? (
-                    <div className="space-y-5">
-                      <div>
-                        <h3 className="text-xl font-black text-black uppercase tracking-tight leading-tight mb-3">
-                          {pageData.title}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
+        <AnimatePresence>
+          {selectedNode && (
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 40 }}
+              transition={{ type: 'tween', duration: 0.25 }}
+              className="absolute top-0 right-0 bottom-0 w-[340px] max-w-[85vw] bg-white border-l border-outline shadow-2xl flex flex-col z-20"
+            >
+              <div className="flex items-center justify-between px-4 py-3 border-b border-outline shrink-0">
+                <div className="flex items-center gap-2">
+                  <Share2 size={14} className="text-black" />
+                  <span className="font-black text-[9px] text-black uppercase tracking-widest">Node Detail</span>
+                </div>
+                <button
+                  onClick={handleCloseEditor}
+                  className="p-1 hover:bg-surface rounded transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-on-surface-variant"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-auto custom-scrollbar p-4">
+                {pageLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-6 h-6 border-2 border-on-surface-variant border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : pageData ? (
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-black text-black uppercase tracking-tight leading-tight mb-2">
+                        {pageData.title}
+                      </h3>
+                      <div className="flex flex-wrap gap-1.5">
+                        <span
+                          className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border"
+                          style={{
+                            backgroundColor: (TYPE_COLORS[pageData.type] || '#94a3b8') + '18',
+                            color: TYPE_COLORS[pageData.type] || '#94a3b8',
+                            borderColor: (TYPE_COLORS[pageData.type] || '#94a3b8') + '30',
+                          }}
+                        >
+                          {pageData.type}
+                        </span>
+                        {pageData.tags?.map((tag) => (
                           <span
-                            className="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider border"
-                            style={{
-                              backgroundColor: (TYPE_COLORS[pageData.type] || '#94a3b8') + '18',
-                              color: TYPE_COLORS[pageData.type] || '#94a3b8',
-                              borderColor: (TYPE_COLORS[pageData.type] || '#94a3b8') + '30',
-                            }}
+                            key={tag}
+                            className="text-[9px] font-bold bg-surface text-on-surface-variant border border-outline px-2 py-0.5 rounded uppercase tracking-wider"
                           >
-                            {pageData.type}
+                            {tag}
                           </span>
-                          {pageData.tags?.map((tag) => (
+                        ))}
+                      </div>
+                    </div>
+
+                    {pageData.date && (
+                      <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
+                        {pageData.date}
+                      </div>
+                    )}
+
+                    {pageData.body && (
+                      <div className="prose prose-sm max-w-none text-[14px]">
+                        {renderMarkdown(pageData.body.slice(0, 800))}
+                        {pageData.body.length > 800 ? <p className="text-on-surface-variant mt-2 italic">…</p> : null}
+                      </div>
+                    )}
+
+                    {pageData.wikilinks && pageData.wikilinks.length > 0 && (
+                      <div className="pt-3 border-t border-outline">
+                        <span className="font-black text-[9px] text-on-surface-variant uppercase tracking-widest block mb-2">
+                          Related Links
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {pageData.wikilinks.map((link) => (
                             <span
-                              key={tag}
-                              className="text-[9px] font-bold bg-surface text-on-surface-variant border border-outline px-2 py-0.5 rounded uppercase tracking-wider"
+                              key={link}
+                              className="text-[10px] font-bold bg-surface text-primary-accent border border-primary-accent/20 px-2 py-0.5 rounded"
                             >
-                              {tag}
+                              [[{link}]]
                             </span>
                           ))}
                         </div>
                       </div>
+                    )}
 
-                      {pageData.date && (
-                        <div className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-                          {pageData.date}
-                        </div>
-                      )}
+                    {pageData.frontmatter?.status && (
+                      <div className="pt-3 border-t border-outline">
+                        <span className="font-black text-[9px] text-on-surface-variant uppercase tracking-widest block mb-1">
+                          Status
+                        </span>
+                        <span className="text-[10px] font-bold bg-primary-accent/10 text-primary-accent border border-primary-accent/20 px-2 py-0.5 rounded uppercase tracking-wider">
+                          {pageData.frontmatter.status}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-on-surface-variant">
+                    <FileText size={32} className="mb-3 opacity-30" />
+                    <p className="text-sm">Could not load page content</p>
+                  </div>
+)}
+               </div>
+             </motion.div>
+           )}
+         </AnimatePresence>
 
-                      {pageData.body && (
-                        <div className="prose prose-sm max-w-none">
-                          <p className="font-serif text-sm text-on-surface-variant leading-relaxed whitespace-pre-line">
-                            {pageData.body.slice(0, 600)}
-                            {pageData.body.length > 600 ? '…' : ''}
-                          </p>
-                        </div>
-                      )}
-
-                      {pageData.wikilinks && pageData.wikilinks.length > 0 && (
-                        <div className="pt-4 border-t border-outline">
-                          <span className="font-black text-[9px] text-on-surface-variant uppercase tracking-widest block mb-3">
-                            Related Links
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {pageData.wikilinks.map((link) => (
-                              <span
-                                key={link}
-                                className="text-[10px] font-bold bg-surface text-primary-accent border border-primary-accent/20 px-2 py-0.5 rounded"
-                              >
-                                [[{link}]]
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {pageData.frontmatter?.status && (
-                        <div className="pt-4 border-t border-outline">
-                          <span className="font-black text-[9px] text-on-surface-variant uppercase tracking-widest block mb-2">
-                            Status
-                          </span>
-                          <span className="text-[10px] font-bold bg-primary-accent/10 text-primary-accent border border-primary-accent/20 px-2 py-0.5 rounded uppercase tracking-wider">
-                            {pageData.frontmatter.status}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-12 text-on-surface-variant">
-                      <FileText size={32} className="mb-3 opacity-30" />
-                      <p className="text-sm">Could not load page content</p>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        <div className="h-14 bg-white border-t border-outline flex items-center justify-center z-20 shrink-0">
-          <div className="flex items-center gap-1 bg-surface p-1 rounded-md border border-outline">
-            <button
-              onClick={handleZoomIn}
-              className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold text-on-surface-variant hover:text-black uppercase tracking-widest transition-colors border-r border-outline"
-            >
-              <Search size={14} /> Zoom
-            </button>
-            <button
-              onClick={handleRecenter}
-              className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold text-on-surface-variant hover:text-black uppercase tracking-widest transition-colors border-r border-outline"
-            >
-              <LayoutGrid size={14} /> Recenter
-            </button>
-            <button
-              onClick={() => setTypeFilter(null)}
-              className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-bold text-on-surface-variant hover:text-black uppercase tracking-widest transition-colors border-r border-outline"
-            >
-              <Share2 size={14} /> Layers
-            </button>
-            <button
-              onClick={handleAutoLayout}
-              className="flex items-center gap-2 px-4 py-1.5 text-[10px] font-black text-black uppercase tracking-widest transition-colors"
-            >
-              <Zap size={14} /> Auto-Layout
-            </button>
+        <div className="absolute left-6 bottom-6 z-20 flex flex-col bg-white rounded-lg shadow-lg border border-outline overflow-hidden">
+          <button
+            onClick={handleZoomIn}
+            className="flex items-center justify-center w-9 h-9 text-on-surface-variant hover:text-black hover:bg-surface transition-colors border-b border-outline"
+            title="Zoom in"
+          >
+            <ZoomIn size={16} />
+          </button>
+          <div className="flex items-center justify-center h-7 text-[9px] font-bold text-on-surface-variant bg-surface/50 border-b border-outline">
+            {Math.round(zoomRef.current * 100)}%
           </div>
+          <button
+            onClick={handleZoomOut}
+            className="flex items-center justify-center w-9 h-9 text-on-surface-variant hover:text-black hover:bg-surface transition-colors border-b border-outline"
+            title="Zoom out"
+          >
+            <ZoomOut size={16} />
+          </button>
+          <button
+            onClick={handleRecenter}
+            className="flex items-center justify-center w-9 h-9 text-on-surface-variant hover:text-black hover:bg-surface transition-colors border-b border-outline"
+            title="Reset view"
+          >
+            <Maximize2 size={16} />
+          </button>
+          <button
+            onClick={handleAutoLayout}
+            className="flex items-center justify-center w-9 h-9 text-on-surface-variant hover:text-black hover:bg-surface transition-colors"
+            title="Auto-layout"
+          >
+            <Share2 size={16} />
+          </button>
         </div>
       </div>
-    </div>
   );
 }

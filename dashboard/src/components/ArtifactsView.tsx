@@ -3,21 +3,23 @@ import {
   FileText,
   Table,
   Monitor,
-  Plus,
   X,
   Calendar,
   User,
   Folder,
   ChevronDown,
   ChevronRight,
-  PlusSquare,
-  RefreshCw,
   Image as ImageIcon,
   Database,
   Box,
+  Edit3,
+  Eye,
+  RefreshCw,
+  Save,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { fetchFileTree, fetchFile, fetchPages } from '../api';
+import { fetchFileTree, fetchFile, fetchPages, savePage } from '../api';
+import { renderMarkdown } from './MarkdownRenderer';
 import type { FileNode, PageData } from '../types';
 
 interface OpenTab {
@@ -25,6 +27,15 @@ interface OpenTab {
   name: string;
   path: string;
   icon: string;
+}
+
+interface TabContent {
+  content: string;
+  frontmatter?: Record<string, any>;
+  body?: string;
+  wikilinks?: string[];
+  type?: string;
+  size?: number;
 }
 
 function getFileIcon(name: string) {
@@ -41,171 +52,6 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
-function renderMarkdown(body: string, onWikilink: (slug: string) => void): React.ReactNode[] {
-  const lines = body.split('\n');
-  const elements: React.ReactNode[] = [];
-  let i = 0;
-  let inCodeBlock = false;
-  let codeLines: string[] = [];
-  let inList = false;
-  let listItems: React.ReactNode[] = [];
-
-  const flushList = () => {
-    if (listItems.length > 0) {
-      elements.push(
-        <ul key={`list-${i}`} className="list-disc pl-6 space-y-1 my-4 text-on-surface-variant">
-          {listItems}
-        </ul>
-      );
-      listItems = [];
-      inList = false;
-    }
-  };
-
-  const processInline = (text: string): React.ReactNode[] => {
-    const parts: React.ReactNode[] = [];
-    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`|\[\[(.+?)\]\])/g;
-    let lastIndex = 0;
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.slice(lastIndex, match.index));
-      }
-      if (match[2]) {
-        parts.push(<strong key={`b-${match.index}`} className="font-bold text-on-surface">{match[2]}</strong>);
-      } else if (match[3]) {
-        parts.push(<em key={`i-${match.index}`} className="italic">{match[3]}</em>);
-      } else if (match[4]) {
-        parts.push(
-          <code key={`c-${match.index}`} className="font-mono text-sm bg-surface px-1.5 py-0.5 rounded border border-outline text-on-surface">
-            {match[4]}
-          </code>
-        );
-      } else if (match[5]) {
-        const slug = match[5];
-        parts.push(
-          <button
-            key={`wl-${match.index}`}
-            onClick={(e) => { e.preventDefault(); onWikilink(slug); }}
-            className="text-primary-accent hover:underline cursor-pointer bg-primary-accent/5 px-0.5 rounded"
-          >
-            {slug}
-          </button>
-        );
-      }
-      lastIndex = match.index + match[0].length;
-    }
-    if (lastIndex < text.length) {
-      parts.push(text.slice(lastIndex));
-    }
-    return parts;
-  };
-
-  while (i < lines.length) {
-    const line = lines[i];
-
-    if (line.startsWith('```')) {
-      flushList();
-      if (inCodeBlock) {
-        elements.push(
-          <pre key={`code-${i}`} className="font-mono text-sm bg-on-surface text-white p-6 rounded-lg my-6 overflow-x-auto">
-            <code>{codeLines.join('\n')}</code>
-          </pre>
-        );
-        codeLines = [];
-        inCodeBlock = false;
-      } else {
-        inCodeBlock = true;
-      }
-      i++;
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeLines.push(line);
-      i++;
-      continue;
-    }
-
-    if (line.startsWith('> ')) {
-      flushList();
-      const quoteLines: string[] = [];
-      while (i < lines.length && lines[i].startsWith('> ')) {
-        quoteLines.push(lines[i].slice(2));
-        i++;
-      }
-      elements.push(
-        <blockquote key={`bq-${i}`} className="border-l-2 border-black pl-6 my-8 italic text-on-surface">
-          {quoteLines.map((ql, qi) => (
-            <p key={qi} className="mb-2">{processInline(ql)}</p>
-          ))}
-        </blockquote>
-      );
-      continue;
-    }
-
-    if (line.startsWith('### ')) {
-      flushList();
-      elements.push(
-        <h3 key={`h3-${i}`} className="text-lg font-sans font-black text-black mt-10 mb-3 tracking-tight uppercase">
-          {processInline(line.slice(4))}
-        </h3>
-      );
-      i++;
-      continue;
-    }
-
-    if (line.startsWith('## ')) {
-      flushList();
-      elements.push(
-        <h2 key={`h2-${i}`} className="text-xl font-sans font-black text-black mt-14 mb-4 tracking-tight uppercase">
-          {processInline(line.slice(3))}
-        </h2>
-      );
-      i++;
-      continue;
-    }
-
-    if (line.startsWith('# ')) {
-      flushList();
-      elements.push(
-        <h1 key={`h1-${i}`} className="text-2xl font-sans font-black text-black mt-14 mb-6 tracking-tight uppercase">
-          {processInline(line.slice(2))}
-        </h1>
-      );
-      i++;
-      continue;
-    }
-
-    if (/^[-*] /.test(line)) {
-      if (!inList) inList = true;
-      listItems.push(
-        <li key={`li-${i}`}>{processInline(line.replace(/^[-*] /, ''))}</li>
-      );
-      i++;
-      continue;
-    }
-
-    flushList();
-
-    if (line.trim() === '') {
-      i++;
-      continue;
-    }
-
-    elements.push(
-      <p key={`p-${i}`} className="leading-relaxed my-4">
-        {processInline(line)}
-      </p>
-    );
-    i++;
-  }
-
-  flushList();
-
-  return elements;
 }
 
 function FileTreeNode({
@@ -284,13 +130,16 @@ function FileTreeNode({
 
 export default function ArtifactsView() {
   const [tree, setTree] = useState<FileNode | null>(null);
-  const [pages, setPages] = useState<PageData[]>([]);
+  const [pages, setPages] = useState<any[]>([]);
   const [openTabs, setOpenTabs] = useState<OpenTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
-  const [fileContent, setFileContent] = useState<{ content: string; frontmatter?: Record<string, any>; body?: string; wikilinks?: string[]; type?: string; size?: number } | null>(null);
+  const [tabContents, setTabContents] = useState<Map<string, TabContent>>(new Map());
   const [loading, setLoading] = useState(false);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [error, setError] = useState<string | null>(null);
+  const [editMode, setEditMode] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const loadTree = useCallback(async () => {
     try {
@@ -319,6 +168,9 @@ export default function ArtifactsView() {
     loadPages();
   }, [loadTree, loadPages]);
 
+  const activeContent = activeTabId ? tabContents.get(activeTabId) : undefined;
+  const activeTab = openTabs.find((t) => t.id === activeTabId);
+
   const selectFile = useCallback(async (node: FileNode) => {
     const tab: OpenTab = {
       id: node.id,
@@ -333,23 +185,27 @@ export default function ArtifactsView() {
       return prev;
     });
     setActiveTabId(tab.id);
+    setEditMode(false);
 
-    setLoading(true);
-    try {
-      const content = await fetchFile(tab.path);
-      setFileContent(content);
-    } catch (err) {
-      setFileContent({ content: 'Failed to load file content.' });
+    if (!tabContents.has(tab.id)) {
+      setLoading(true);
+      try {
+        const content = await fetchFile(tab.path);
+        setTabContents((prev) => new Map(prev).set(tab.id, content));
+      } catch (err) {
+        setTabContents((prev) => new Map(prev).set(tab.id, { content: 'Failed to load file content.' }));
+      }
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [tabContents]);
 
   const closeTab = useCallback((tabId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setOpenTabs((prev) => {
-      const next = prev.filter((t) => t.id !== tabId);
-      return next;
-    });
+    const newContents = new Map(tabContents);
+    newContents.delete(tabId);
+    setTabContents(newContents);
+
+    setOpenTabs((prev) => prev.filter((t) => t.id !== tabId));
     setActiveTabId((prev) => {
       if (prev === tabId) {
         const remaining = openTabs.filter((t) => t.id !== tabId);
@@ -357,17 +213,34 @@ export default function ArtifactsView() {
       }
       return prev;
     });
-    if (activeTabId === tabId) {
-      setFileContent(null);
+    setEditMode(false);
+  }, [openTabs, tabContents]);
+
+  const handleSave = useCallback(async () => {
+    if (!activeTab || !editContent) return;
+    setSaving(true);
+    try {
+      await savePage(activeTab.path, editContent);
+      setTabContents((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(activeTab.id);
+        if (existing) {
+          next.set(activeTab.id, { ...existing, content: editContent, body: editContent });
+        }
+        return next;
+      });
+      setEditMode(false);
+    } catch (err) {
+      console.error('Failed to save:', err);
     }
-  }, [activeTabId, openTabs]);
+    setSaving(false);
+  }, [activeTab, editContent]);
 
   const handleWikilink = useCallback((slug: string) => {
     const page = pages.find(
       (p) => p.slug === slug || p.filePath?.includes(slug)
     );
     if (page && page.filePath) {
-      const nodeId = page.filePath.replace(/\.md$/, '');
       selectFile({
         id: page.filePath,
         name: page.filePath.split('/').pop() || slug,
@@ -376,15 +249,19 @@ export default function ArtifactsView() {
     }
   }, [pages, selectFile]);
 
-  const activeTab = openTabs.find((t) => t.id === activeTabId);
+  const handleTabClick = useCallback((tabId: string) => {
+    setActiveTabId(tabId);
+    setEditMode(false);
+  }, []);
 
-  const recentFiles = tree
-    ? flattenFiles(tree).slice(0, 5)
+  const tree_ = tree;
+  const recentFiles = tree_
+    ? flattenFiles(tree_).slice(0, 5)
     : [];
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      <div className="flex-1 flex flex-col bg-surface min-w-0">
+    <div className="flex-1 flex h-full overflow-hidden">
+      <div className="flex-1 flex flex-col bg-surface min-w-0 h-full">
         <div className="flex bg-surface-bright border-b border-outline overflow-x-auto custom-scrollbar h-11 items-center shrink-0">
           {openTabs.map((tab) => {
             const TabIcon = getFileIcon(tab.name);
@@ -392,7 +269,7 @@ export default function ArtifactsView() {
             return (
               <div
                 key={tab.id}
-                onClick={() => setActiveTabId(tab.id)}
+                onClick={() => handleTabClick(tab.id)}
                 className={`flex items-center px-4 h-full min-w-[160px] max-w-[240px] gap-2 cursor-pointer border-r border-outline transition-colors relative group ${
                   isActive
                     ? 'bg-surface-bright text-on-surface'
@@ -414,14 +291,11 @@ export default function ArtifactsView() {
               </div>
             );
           })}
-          <button className="px-3 flex items-center justify-center text-on-surface-variant hover:text-black transition-colors h-full shrink-0">
-            <Plus size={16} />
-          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-12 code-canvas custom-scrollbar">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
           {!activeTab ? (
-            <div className="flex flex-col items-center justify-center py-32 text-on-surface-variant">
+            <div className="flex flex-col items-center justify-center py-32 text-on-surface-variant code-canvas h-full">
               <Box size={48} className="mb-4 opacity-30" />
               <p className="text-lg font-semibold text-on-surface">No file selected</p>
               <p className="text-sm mt-1">Select a file from the Explorer to view its contents</p>
@@ -430,71 +304,115 @@ export default function ArtifactsView() {
             <div className="flex items-center justify-center py-32">
               <RefreshCw size={24} className="animate-spin text-on-surface-variant" />
             </div>
-          ) : fileContent ? (
-            <article className="w-full max-w-4xl mx-auto bg-surface-bright border border-outline shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-lg p-16">
-              {fileContent.frontmatter && (
-                <div className="mb-12">
-                  <span className="font-bold text-[9px] text-on-surface-variant bg-surface px-2 py-0.5 rounded uppercase tracking-widest border border-outline mb-6 inline-block">
-                    {fileContent.frontmatter.type
-                      ? `${fileContent.frontmatter.type} Document`
-                      : fileContent.type
-                        ? `${fileContent.type.toUpperCase()} File`
-                        : 'File'}
-                  </span>
-                  <h2 className="font-sans text-3xl font-black mt-4 text-black leading-tight tracking-tight uppercase">
-                    {fileContent.frontmatter.title || activeTab.name}
-                  </h2>
-                  <div className="flex gap-6 mt-6 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pt-4 border-t border-outline">
-                    {fileContent.frontmatter.date && (
-                      <span className="flex items-center gap-2">
-                        <Calendar size={14} className="opacity-50" />
-                        {fileContent.frontmatter.date}
-                      </span>
+          ) : activeContent ? (
+            <div className="p-8">
+              <div className="w-full max-w-4xl mx-auto bg-surface-bright border border-outline shadow-[0_4px_24px_rgba(0,0,0,0.02)] rounded-lg">
+                <div className="p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    {activeContent.frontmatter && (
+                      <div>
+                        <span className="font-bold text-[9px] text-on-surface-variant bg-surface px-2 py-0.5 rounded uppercase tracking-widest border border-outline">
+                          {activeContent.frontmatter.type
+                            ? `${activeContent.frontmatter.type} Document`
+                            : activeContent.type
+                              ? `${activeContent.type.toUpperCase()} File`
+                              : 'File'}
+                        </span>
+                      </div>
                     )}
-                    {fileContent.frontmatter.author && (
-                      <span className="flex items-center gap-2">
-                        <User size={14} className="opacity-50" />
-                        {fileContent.frontmatter.author}
-                      </span>
-                    )}
-                    {fileContent.size && (
-                      <span className="flex items-center gap-2">
-                        <FileText size={14} className="opacity-50" />
-                        {formatFileSize(fileContent.size)}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {editMode ? (
+                        <>
+                          <button
+                            onClick={handleSave}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 bg-black text-white px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-primary-accent transition-all disabled:opacity-50"
+                          >
+                            <Save size={12} />
+                            {saving ? 'Saving...' : 'Save'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditMode(false);
+                              setEditContent(activeContent.body || activeContent.content || '');
+                            }}
+                            className="flex items-center gap-1.5 border border-outline px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-black transition-all"
+                          >
+                            <Eye size={12} />
+                            View
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setEditContent(activeContent.body || activeContent.content || '');
+                            setEditMode(true);
+                          }}
+                          className="flex items-center gap-1.5 border border-outline px-4 py-1.5 rounded text-[10px] font-bold uppercase tracking-widest text-on-surface-variant hover:text-black transition-all"
+                        >
+                          <Edit3 size={12} />
+                          Edit
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
 
-              {fileContent.body ? (
-                <section className="font-serif text-[18px] text-on-surface-variant leading-relaxed">
-                  {renderMarkdown(fileContent.body, handleWikilink)}
-                </section>
-              ) : (
-                <div className="font-mono text-sm whitespace-pre-wrap text-on-surface-variant bg-surface p-6 rounded border border-outline overflow-x-auto">
-                  {typeof fileContent.content === 'string' ? fileContent.content : JSON.stringify(fileContent.content, null, 2)}
+                  {activeContent.frontmatter && (
+                    <div className="mb-8">
+                      <h2 className="font-sans text-3xl font-black text-black leading-tight tracking-tight uppercase">
+                        {activeContent.frontmatter.title || activeTab?.name}
+                      </h2>
+                      <div className="flex gap-6 mt-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-widest pt-4 border-t border-outline">
+                        {activeContent.frontmatter.date && (
+                          <span className="flex items-center gap-2">
+                            <Calendar size={14} className="opacity-50" />
+                            {activeContent.frontmatter.date}
+                          </span>
+                        )}
+                        {activeContent.frontmatter.author && (
+                          <span className="flex items-center gap-2">
+                            <User size={14} className="opacity-50" />
+                            {activeContent.frontmatter.author}
+                          </span>
+                        )}
+                        {activeContent.size && (
+                          <span className="flex items-center gap-2">
+                            <FileText size={14} className="opacity-50" />
+                            {formatFileSize(activeContent.size)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {editMode ? (
+                    <div className="flex-1">
+                      <textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="w-full h-[600px] bg-transparent border border-outline rounded-lg p-6 focus:outline-none focus:ring-1 focus:ring-primary-accent/30 font-mono text-sm text-on-surface-variant resize-none custom-scrollbar"
+                        placeholder="Edit content..."
+                      />
+                    </div>
+                  ) : activeContent.body ? (
+                    <section className="font-serif text-[18px] text-on-surface-variant leading-relaxed">
+                      {renderMarkdown(activeContent.body, handleWikilink)}
+                    </section>
+                  ) : (
+                    <div className="font-mono text-sm whitespace-pre-wrap text-on-surface-variant bg-surface p-6 rounded border border-outline overflow-x-auto">
+                      {typeof activeContent.content === 'string' ? activeContent.content : JSON.stringify(activeContent.content, null, 2)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </article>
+              </div>
+            </div>
           ) : null}
         </div>
       </div>
 
-      <aside className="w-[280px] bg-surface-bright border-l border-outline flex flex-col hidden lg:flex">
-        <div className="p-5 flex items-center justify-between border-b border-outline shrink-0">
+      <aside className="w-[280px] bg-surface-bright border-l border-outline flex flex-col hidden lg:flex h-full">
+        <div className="p-5 flex items-center border-b border-outline shrink-0">
           <span className="font-black text-[10px] uppercase text-black tracking-widest">Explorer</span>
-          <div className="flex gap-1">
-            <button className="p-1 px-2 text-on-surface-variant hover:text-black transition-colors rounded">
-              <PlusSquare size={14} />
-            </button>
-            <button
-              onClick={loadTree}
-              className="p-1 px-2 text-on-surface-variant hover:text-black transition-colors rounded"
-            >
-              <RefreshCw size={14} />
-            </button>
-          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">

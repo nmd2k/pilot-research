@@ -1,11 +1,39 @@
 ---
-name: brainstorming
+name: pilot-brainstorm
 description: "Use when researcher wants to discuss a research idea, explore a hypothesis, design an experiment, or refine an existing research plan"
 ---
 
 # Brainstorming
 
 This skill guides structured ideation, research planning, and experiment design through Socratic dialogue with the researcher.
+
+## <HARD-GATE>Mandatory Rules</HARD-GATE>
+
+These rules apply to every skill. Violating any of these blocks progress.
+
+1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
+
+2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
+
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+
+4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
+
+5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
+
+6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+
+## Research Wiki Structure
+
+All research content lives in `.research/` in the project root:
+
+- `papers/` — Paper summaries `[[paper-<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
+- `queries/` — Saved Q&A results `[[query-<topic>]]`
+- `plans/` — Research plans `[[plan-v<N>]]`
+- `experiments/` — Experiment reports `[[exp-<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -141,9 +169,9 @@ Stop and address these before proceeding:
 ## Transitioning to Other Skills
 
 After completing brainstorming:
-- If the researcher needs supporting papers → invoke `pilot-research:literature-review`
-- If the researcher is ready to execute tasks → invoke `pilot-research:execute-research`
-- If the researcher wants feedback on the plan → invoke `pilot-research:peer-review`
+- If the researcher needs supporting papers → invoke `pilot-research:pilot-literature`
+- If the researcher is ready to execute tasks → invoke `pilot-research:pilot-execute`
+- If the researcher wants feedback on the plan → invoke `pilot-research:pilot-peer-review`
 
 <EXTREMELY-IMPORTANT>Always write a handoff report to `.research/handoff/YYYY-MM-DD.md` before ending the session or transitioning to another skill.</EXTREMELY-IMPORTANT>
 

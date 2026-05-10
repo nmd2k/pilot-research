@@ -25,7 +25,8 @@ export interface Task {
   status: 'todo' | 'pending' | 'done' | 'archive';
   assignee?: string;
   date?: string;
-  attachments?: number;
+  dependsOn?: string;
+  links?: string[];
   filePath?: string;
   tags?: string[];
 }

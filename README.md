@@ -1,16 +1,16 @@
 # Pilot Research
 
-Skill-based research workflows for AI coding agents. Structured processes for brainstorming, literature review, experiment execution, paper writing, and peer review — all stored as pure markdown with `[[wikilinks]]`.
+Skill-based research workflows for AI coding agents. Structured processes for pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, and pilot-peer-review — all stored as pure markdown with `[[wikilinks]]`.
 
 ## Skills
 
 | Skill | Description |
 |-------|-------------|
-| `brainstorming` | Socratic research plan discussion |
-| `literature-review` | ArXiv search, paper summarization, wiki building |
-| `execute-research` | Lead research execution with sub-agent workers |
-| `write-paper` | Draft papers from plans, reviews, and experiment results |
-| `peer-review` | Quality control for research artifacts |
+| `pilot-brainstorm` | Socratic research plan discussion |
+| `pilot-literature` | ArXiv search, paper summarization, wiki building |
+| `pilot-execute` | Lead research execution with sub-agent workers |
+| `pilot-write-paper` | Draft papers from plans, reviews, and experiment results |
+| `pilot-peer-review` | Quality control for research artifacts |
 | `using-pilot-research` | Bootstrap skill for new users |
 
 ## Research Wiki
@@ -33,12 +33,12 @@ All artifacts live in a pure markdown wiki (default: `.research/` in your projec
 ### One-line install
 **MacOS/Linux/WSL:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.sh | bash
 ```
 
 **Window:**
 ```powershell
-irm https://raw.githubusercontent.com/OWNER/pilot-research/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.ps1 | iex
 ```
 
 ### Install flags

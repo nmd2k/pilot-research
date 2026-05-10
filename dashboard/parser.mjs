@@ -204,38 +204,45 @@ export function parseBacklogTable(body) {
 
 export function getTasks(parsed) {
   const tasks = [];
-  const taskTypes = ['experiment', 'plan'];
+  const pageMap = new Map();
+  for (const page of parsed.pages) {
+    pageMap.set(page.slug, page);
+    pageMap.set(`${page.type}-${page.slug}`, page);
+  }
 
   for (const page of parsed.pages) {
-    if (taskTypes.includes(page.type)) {
-      const desc = page.frontmatter.description;
-      const firstLine = page.body.split('\n').map(l => l.trim()).find(l => l && !l.startsWith('#'));
-      const description = desc || (firstLine ? firstLine.slice(0, 200) : '');
-      tasks.push({
-        id: `${page.type}-${page.slug}`,
-        title: page.title,
-        description,
-        category: page.frontmatter.category || page.type,
-        status: mapStatusToKanban(page.status),
-        assignee: page.frontmatter.assignee || '',
-        date: page.date,
-        filePath: page.filePath,
-        tags: page.tags,
-      });
-    }
-
-    if (page.type === 'plan' && page.body) {
+    if (page.body) {
       const tableTasks = parseBacklogTable(page.body);
       for (const row of tableTasks) {
+        const linkSlugs = (row.links || '').split(/,\s*/).filter(Boolean).map(l => {
+          const m = l.match(/\[\[([^\]]+)\]\]/);
+          return m ? m[1] : l.trim();
+        });
+
+        let linkedFilePath = page.filePath;
+        for (const slug of linkSlugs) {
+          const linked = pageMap.get(slug);
+          if (linked) {
+            linkedFilePath = linked.filePath;
+            break;
+          }
+        }
+
+        const desc = row.description || '';
+        const taskTitle = row.task || '';
+        const description = desc || (taskTitle.length > 100 ? taskTitle : '');
+
         tasks.push({
           id: row.id || `backlog-${page.slug}-${tasks.length}`,
-          title: row.task || '',
-          description: '',
-          category: 'backlog',
+          title: taskTitle,
+          description,
+          category: page.frontmatter.category || 'backlog',
           status: mapStatusToKanban(row.status || ''),
           assignee: row.assignee || '',
           date: page.date,
-          filePath: page.filePath,
+          dependsOn: row.depends_on || row['depends on'] || '',
+          links: linkSlugs,
+          filePath: linkedFilePath,
           tags: page.tags,
         });
       }

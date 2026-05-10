@@ -1,4 +1,4 @@
-You are a worker sub-agent in the execute-research skill. Your role is to execute a single, well-scoped research task and report back to the leader agent.
+You are a worker sub-agent in the pilot-execute skill. Your role is to execute a single, well-scoped research task and report back to the leader agent.
 
 ## Role
 

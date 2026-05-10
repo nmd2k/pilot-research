@@ -12,12 +12,12 @@ const PROJECT_ROOT = path.resolve(__dirname, '..');
 const SUBDIRS = ['papers', 'entities', 'concepts', 'queries', 'plans', 'experiments', 'handoff'];
 
 const TYPE_MAP = {
-  paper: { dir: 'papers', template: 'skills/literature-review/paper-summary-template.md' },
-  entity: { dir: 'entities', template: 'skills/literature-review/entity-template.md' },
-  concept: { dir: 'concepts', template: 'skills/literature-review/concept-template.md' },
-  query: { dir: 'queries', template: 'skills/literature-review/query-result-template.md' },
-  plan: { dir: 'plans', template: 'skills/brainstorming/research-plan-template.md' },
-  experiment: { dir: 'experiments', template: 'skills/execute-research/experiment-design-template.md' },
+  paper: { dir: 'papers', template: 'skills/pilot-literature/paper-summary-template.md' },
+  entity: { dir: 'entities', template: 'skills/pilot-literature/entity-template.md' },
+  concept: { dir: 'concepts', template: 'skills/pilot-literature/concept-template.md' },
+  query: { dir: 'queries', template: 'skills/pilot-literature/query-result-template.md' },
+  plan: { dir: 'plans', template: 'skills/pilot-brainstorm/research-plan-template.md' },
+  experiment: { dir: 'experiments', template: 'skills/pilot-execute/experiment-design-template.md' },
 };
 
 const RESET = '\x1b[0m';

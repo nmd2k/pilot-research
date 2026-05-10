@@ -7,32 +7,20 @@ import GraphView from './components/GraphView';
 import ArtifactsView from './components/ArtifactsView';
 import SplitEditor from './components/SplitEditor';
 import { View } from './types';
-
-interface SelectedItem {
-  title: string;
-  content: string;
-  metadata?: {
-    author?: string;
-    wordCount?: number;
-    date?: string;
-    status?: string;
-    tags?: string[];
-  };
-  wikilinks?: string[];
-}
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<View>('papers');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<SelectedItem | null>(null);
+  const [selectedPaper, setSelectedPaper] = useState<any>(null);
 
   const renderView = () => {
     switch (currentView) {
-      case 'papers': return <PapersView onOpenDetail={setSelectedItem} />;
+      case 'papers': return <PapersView onOpenDetail={setSelectedPaper} />;
       case 'tasks': return <TasksView />;
       case 'graph': return <GraphView />;
       case 'artifacts': return <ArtifactsView />;
-      default: return <PapersView onOpenDetail={setSelectedItem} />;
+      default: return <PapersView onOpenDetail={setSelectedPaper} />;
     }
   };
 
@@ -50,7 +38,7 @@ export default function App() {
     <div className="flex h-screen bg-surface overflow-hidden selection:bg-primary-accent/20 select-none">
       <Sidebar
         currentView={currentView}
-        onViewChange={(v) => { setCurrentView(v); setSelectedItem(null); setSidebarOpen(false); }}
+        onViewChange={(v) => { setCurrentView(v); setSelectedPaper(null); setSidebarOpen(false); }}
         mobileOpen={sidebarOpen}
         onMobileClose={() => setSidebarOpen(false)}
       />
@@ -59,33 +47,37 @@ export default function App() {
         <TopBar title={getTitle()} onMenuClick={() => setSidebarOpen(true)} />
 
         <div className="flex-1 overflow-hidden flex">
-          <div className={`flex-1 min-w-0 ${selectedItem ? 'hidden md:block' : ''}`}>
+          <div className={`flex-1 min-w-0 flex flex-col overflow-hidden ${selectedPaper ? 'hidden md:flex' : ''}`}>
             {renderView()}
           </div>
-          {selectedItem && (
-            <div className="hidden md:flex md:w-[50%] shrink-0">
-              <SplitEditor
-                title={selectedItem.title}
-                content={selectedItem.content}
-                metadata={selectedItem.metadata}
-                wikilinks={selectedItem.wikilinks}
-                onClose={() => setSelectedItem(null)}
-              />
-            </div>
-          )}
+          <AnimatePresence>
+            {selectedPaper && (
+              <motion.div
+                key="paper-editor"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: '50%', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: 'tween', duration: 0.2 }}
+                className="h-full shrink-0 overflow-hidden"
+              >
+                <SplitEditor
+                  key={selectedPaper.filePath || selectedPaper.id}
+                  title={selectedPaper.title}
+                  content=""
+                  filePath={selectedPaper.filePath || selectedPaper.id}
+                  metadata={{
+                    author: selectedPaper.authors,
+                    date: selectedPaper.date,
+                    status: selectedPaper.status,
+                    tags: selectedPaper.tags,
+                  }}
+                  wikilinks={selectedPaper.wikilinks}
+                  onClose={() => setSelectedPaper(null)}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
-
-        <footer className="flex justify-between items-center px-10 py-3 bg-surface-bright border-t border-outline-variant z-40 shrink-0">
-          <div className="flex items-center gap-6">
-            <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-widest">Workbench OS v2.4</span>
-          </div>
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-[11px] text-on-surface-variant hover:text-primary transition-colors">Documentation</a>
-            <a href="#" className="text-[11px] text-on-surface-variant hover:text-primary transition-colors">Privacy Policy</a>
-            <span className="text-on-surface-variant opacity-30 text-xs">•</span>
-            <span className="text-[11px] text-on-surface-variant">© 2024 Academic Research Workbench.</span>
-          </div>
-        </footer>
       </main>
     </div>
   );

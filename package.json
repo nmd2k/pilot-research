@@ -6,7 +6,7 @@
   "bin": {
     "pilot": "./cli/pilot.mjs"
   },
-  "description": "Research workflow skills for coding agents: brainstorming, literature review, experiment execution, paper writing, and peer review",
+  "description": "Research workflow skills for coding agents: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, and pilot-peer-review",
   "license": "MIT",
-  "keywords": ["research", "literature-review", "brainstorming", "peer-review", "skills"]
+  "keywords": ["research", "pilot-literature", "pilot-brainstorm", "pilot-peer-review", "skills"]
 }

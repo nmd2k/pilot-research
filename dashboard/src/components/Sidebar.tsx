@@ -52,18 +52,6 @@ export default function Sidebar({ currentView, onViewChange, mobileOpen, onMobil
           );
         })}
       </div>
-
-      <div className="p-6 mt-auto">
-        <div className="bg-white/40 rounded-xl p-4 border border-white/20">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded bg-black flex items-center justify-center text-[10px] font-bold text-white italic">RP</div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold text-black truncate uppercase tracking-widest leading-none mb-1">Researcher Profile</p>
-              <p className="text-[9px] text-on-surface-variant truncate uppercase tracking-widest leading-none">Senior Analyst</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </nav>
   );
 

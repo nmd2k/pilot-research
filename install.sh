@@ -193,7 +193,7 @@ install_claude() {
   "homepage": "https://github.com/OWNER/pilot-research",
   "repository": "https://github.com/OWNER/pilot-research",
   "license": "MIT",
-  "keywords": ["research", "literature-review", "brainstorming", "peer-review", "skills"]
+  "keywords": ["research", "pilot-literature", "pilot-brainstorm", "pilot-peer-review", "skills"]
 }'
   
   echo "$plugin_json" | run tee "$target_dir/plugin.json" > /dev/null
@@ -287,13 +287,13 @@ globs:
 alwaysApply: true
 ---
 
-You have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. Use the skill registry for: brainstorming, literature-review, execute-research, write-paper, peer-review. All research artifacts go into `.research/` using wikilink conventions.'
+You have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. Use the skill registry for: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review. All research artifacts go into `.research/` using wikilink conventions.'
 
 WINDSURF_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
 CLINE_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
-COPILOT_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions. Skills: brainstorming, literature-review, execute-research, write-paper, peer-review.'
+COPILOT_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions. Skills: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review.'
 
 CODEX_RULE='# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 

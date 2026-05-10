@@ -15,11 +15,11 @@ const SESSION_START = path.join(HOOKS_DIR, 'session-start');
 const OPENCODE_PLUGIN = path.join(PROJECT_ROOT, '.opencode', 'plugins', 'pilot-research.js');
 
 const SKILL_NAMES = [
-  'brainstorming',
-  'literature-review',
-  'execute-research',
-  'write-paper',
-  'peer-review',
+  'pilot-brainstorm',
+  'pilot-literature',
+  'pilot-execute',
+  'pilot-write-paper',
+  'pilot-peer-review',
 ];
 
 function estimateTokens(text) {
@@ -59,7 +59,7 @@ Use OpenCode's native \`skill\` tool to list and load skills.`;
   return `<EXTREMELY_IMPORTANT>
 You have pilot-research.
 
-**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load "using-pilot-research" again - that would be redundant.**
+**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you do not need to load it again.**
 
 ${body}
 
@@ -86,7 +86,7 @@ function simulateClaudeCodeInjection() {
   ];
   const toolMapping = tmLines.join("\n");
 
-  const preamble = "You have pilot-research.\n\n**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you are currently following it. Do NOT use the skill tool to load \"using-pilot-research\" again - that would be redundant.**\n\n";
+  const preamble = "You have pilot-research.\n\n**IMPORTANT: The using-pilot-research skill content is included below. It is ALREADY LOADED - you do not need to load it again.**\n\n";
   const sessionContext = "<EXTREMELY_IMPORTANT>\n" + preamble + body + toolMapping + "\n</EXTREMELY_IMPORTANT>";
 
   return sessionContext;
@@ -177,10 +177,10 @@ function status(actual, target) {
   return `${RED}OVER${RESET} by ${over} tokens (${pct}% over limit)`;
 }
 
-console.log(`  Bootstrap (<=2000):   ${status(bootstrapTokens, 2000)}`);
-console.log(`  Per skill (<=1500):`);
+console.log(`  Bootstrap (<=500):    ${status(bootstrapTokens, 500)}`);
+console.log(`  Per skill (<=2500):`);
 for (const s of perSkillData) {
-  console.log(`    ${s.name.padEnd(22)} ${status(s.tokens, 1500)}`);
+  console.log(`    ${s.name.padEnd(22)} ${status(s.tokens, 2500)}`);
 }
 const maxSession = bootstrapTokens + Math.max(...perSkillData.map(s => s.tokens), 0);
 console.log(`  Session+1 skill (<=3500): ${status(maxSession, 3500)}`);

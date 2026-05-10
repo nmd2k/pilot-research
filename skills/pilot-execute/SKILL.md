@@ -1,11 +1,39 @@
 ---
-name: execute-research
+name: pilot-execute
 description: "Use when researcher wants to execute research tasks from the backlog, run experiments, or manage the research process with sub-agents"
 ---
 
 # Execute Research
 
 This skill manages research execution using a **leader/worker pattern**. The main agent acts as the leader, coordinating tasks and spawning sub-agents (workers) to execute individual experiments.
+
+## <HARD-GATE>Mandatory Rules</HARD-GATE>
+
+These rules apply to every skill. Violating any of these blocks progress.
+
+1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
+
+2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
+
+3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YYYY-MM-DD.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
+
+4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
+
+5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
+
+6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+
+## Research Wiki Structure
+
+All research content lives in `.research/` in the project root:
+
+- `papers/` — Paper summaries `[[paper-<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
+- `queries/` — Saved Q&A results `[[query-<topic>]]`
+- `plans/` — Research plans `[[plan-v<N>]]`
+- `experiments/` — Experiment reports `[[exp-<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff-<YYYY-MM-DD>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -15,7 +43,7 @@ This skill manages research execution using a **leader/worker pattern**. The mai
 - [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md`
 - [ ] Confirm the backlog has tasks ready for execution
 
-<EXTREMELY-IMPORTANT>You cannot execute research without a plan and backlog. If these are missing, invoke `pilot-research:brainstorming` first.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>You cannot execute research without a plan and backlog. If these are missing, invoke `pilot-research:pilot-brainstorm` first.</EXTREMELY-IMPORTANT>
 
 ## Leader / Worker Pattern
 
@@ -131,8 +159,8 @@ Write a handoff report to `.research/handoff/YYYY-MM-DD.md` using `handoff-repor
 
 | Red Flag | Why It Matters |
 |----------|---------------|
-| No research plan exists | Cannot execute without direction; invoke `pilot-research:brainstorming` |
-| No backlog exists | No tasks to execute; invoke `pilot-research:brainstorming` |
+| No research plan exists | Cannot execute without direction; invoke `pilot-research:pilot-brainstorm` |
+| No backlog exists | No tasks to execute; invoke `pilot-research:pilot-brainstorm` |
 | Starting a task before dependencies are met | Will produce invalid or incomplete results |
 | Worker produces results without wikilinks | Breaks the knowledge graph |
 | Skipping the researcher confirmation step | May execute unwanted or incorrect tasks |
@@ -150,10 +178,10 @@ Write a handoff report to `.research/handoff/YYYY-MM-DD.md` using `handoff-repor
 ## Transitioning to Other Skills
 
 After completing execution:
-- If experiments produce results worth writing up → invoke `pilot-research:write-paper`
-- If results suggest the plan needs refinement → invoke `pilot-research:brainstorming`
-- If more literature is needed to interpret results → invoke `pilot-research:literature-review`
-- If researcher wants feedback on experiment design → invoke `pilot-research:peer-review`
+- If experiments produce results worth writing up → invoke `pilot-research:pilot-write-paper`
+- If results suggest the plan needs refinement → invoke `pilot-research:pilot-brainstorm`
+- If more literature is needed to interpret results → invoke `pilot-research:pilot-literature`
+- If researcher wants feedback on experiment design → invoke `pilot-research:pilot-peer-review`
 
 ## Templates
 
