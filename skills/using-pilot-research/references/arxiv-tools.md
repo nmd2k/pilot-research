@@ -5,7 +5,7 @@
 ### Command Syntax
 
 ```
-python3 scripts/arxiv-query.py <SEARCH_TERMS> [OPTIONS]
+pilot arxiv-query <SEARCH_TERMS> [OPTIONS]
 ```
 
 ### Options
@@ -23,13 +23,13 @@ python3 scripts/arxiv-query.py <SEARCH_TERMS> [OPTIONS]
 Search terms are positional arguments. Combine multiple terms with AND logic:
 
 ```bash
-python3 scripts/arxiv-query.py "transformer" "attention mechanism"
+pilot arxiv-query "transformer" "attention mechanism"
 ```
 
 Use ArXiv category prefixes for targeted searches:
 
 ```bash
-python3 scripts/arxiv-query.py "cat:cs.AI" "reinforcement learning"
+pilot arxiv-query "cat:cs.AI" "reinforcement learning"
 ```
 
 ### Expected Output
@@ -58,19 +58,19 @@ The script returns JSON to stdout:
 Search for papers on transformer attention mechanisms:
 
 ```bash
-python3 scripts/arxiv-query.py "transformer" "attention mechanism" --max-results 5 --sort-by relevance
+pilot arxiv-query "transformer" "attention mechanism" --max-results 5 --sort-by relevance
 ```
 
 Search for recent papers in a specific category:
 
 ```bash
-python3 scripts/arxiv-query.py "cat:cs.CL" "large language models" --sort-by date --max-results 10
+pilot arxiv-query "cat:cs.CL" "large language models" --sort-by date --max-results 10
 ```
 
 Paginated search with date range:
 
 ```bash
-python3 scripts/arxiv-query.py "neural architecture search" --start-date 2023-01-01 --end-date 2023-12-31 --offset 10 --max-results 10
+pilot arxiv-query "neural architecture search" --start-date 2023-01-01 --end-date 2023-12-31 --offset 10 --max-results 10
 ```
 
 ### Error Handling
@@ -86,7 +86,7 @@ python3 scripts/arxiv-query.py "neural architecture search" --start-date 2023-01
 ### Command Syntax
 
 ```
-python3 scripts/pdf-extract.py <SOURCE> [OPTIONS]
+pilot pdf-extract <SOURCE> [OPTIONS]
 ```
 
 ### Options
@@ -139,19 +139,19 @@ If PyPDF2 is not installed:
 Extract text from an ArXiv PDF:
 
 ```bash
-python3 scripts/pdf-extract.py "http://arxiv.org/pdf/2310.12345v1.pdf"
+pilot pdf-extract "http://arxiv.org/pdf/2310.12345v1.pdf"
 ```
 
 Extract from a local PDF in JSON format:
 
 ```bash
-python3 scripts/pdf-extract.py ./downloads/paper.pdf --format json
+pilot pdf-extract ./downloads/paper.pdf --format json
 ```
 
 Extract with page separators:
 
 ```bash
-python3 scripts/pdf-extract.py "http://arxiv.org/pdf/2310.12345v1.pdf" --pages-only
+pilot pdf-extract "http://arxiv.org/pdf/2310.12345v1.pdf" --pages-only
 ```
 
 ### Dependencies
@@ -169,7 +169,7 @@ The standard workflow for processing research papers:
 ### 1. Search
 
 ```bash
-python3 scripts/arxiv-query.py "your search terms" --max-results 10 --sort-by relevance
+pilot arxiv-query "your search terms" --max-results 10 --sort-by relevance
 ```
 
 Review the JSON output and identify relevant papers by title and abstract.
@@ -187,7 +187,7 @@ From the query results, identify papers worth reading based on:
 For each selected paper, download and extract the text:
 
 ```bash
-python3 scripts/pdf-extract.py "http://arxiv.org/pdf/PAPER_IDv1.pdf" --format json
+pilot pdf-extract "http://arxiv.org/pdf/PAPER_IDv1.pdf" --format json
 ```
 
 Or use a local PDF if already downloaded.

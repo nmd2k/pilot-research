@@ -67,7 +67,7 @@ Ask the researcher:
 Use `arxiv-query.py` to find papers on ArXiv:
 
 ```bash
-python scripts/arxiv-query.py --query "your search terms" --max-results 20
+pilot arxiv-query --query "your search terms" --max-results 20
 ```
 
 For researcher-provided PDFs or URLs, process them directly in Step 5.
@@ -86,14 +86,20 @@ Present found papers to the researcher for selection before deep reading:
 
 ### Step 5: Read
 
-For each selected paper, use `pdf-extract.py` to extract content:
+**Preferred Method (HTML):**
+ArXiv now provides HTML versions for most recent papers, which are much cleaner and preserve math/formatting better than PDFs.
+1. Extract the ArXiv ID from the search results (e.g., `2310.12345v1`).
+2. Construct the HTML URL: `https://arxiv.org/html/2310.12345v1`
+3. Use your built-in web fetching tool (e.g., `webfetch` or browser) to read the page.
+
+**Fallback Method (PDF):**
+If the HTML version is unavailable or you are working with a direct PDF file, use the CLI extractor:
 
 ```bash
-python scripts/pdf-extract.py --input <path-or-url>
+pilot pdf-extract <path-or-url>
 ```
 
-Or read the paper content directly from a provided URL.
-
+While reading the paper:
 - [ ] Extract key arguments, methodology, results, and conclusions
 - [ ] Note connections to other papers and concepts
 - [ ] Identify entities (authors, datasets, tools, institutions)
@@ -162,16 +168,16 @@ The `arxiv-query.py` script queries ArXiv's API. Key usage:
 
 ```bash
 # Basic search
-python scripts/arxiv-query.py --query "transformer attention mechanism" --max-results 10
+pilot arxiv-query --query "transformer attention mechanism" --max-results 10
 
 # Search with date filter
-python scripts/arxiv-query.py --query "large language models" --max-results 20 --start-year 2022
+pilot arxiv-query --query "large language models" --max-results 20 --start-year 2022
 
 # Search specific categories
-python scripts/arxiv-query.py --query "reinforcement learning" --categories cs.AI,cs.LG
+pilot arxiv-query --query "reinforcement learning" --categories cs.AI,cs.LG
 ```
 
-<EXTREMELY-IMPORTANT>Always check the script's help (`python scripts/arxiv-query.py --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Always check the script's help (`pilot arxiv-query --help`) for the latest available options before running queries.</EXTREMELY-IMPORTANT>
 
 ## Red Flags
 
