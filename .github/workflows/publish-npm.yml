@@ -1,15 +1,24 @@
 name: Publish npm
 
-# Real publish: push a semver git tag after bumping "version" in package.json (e.g. v0.2.0).
-# Repo secret: NPM_TOKEN — npm "Automation" token (Settings → Secrets → Actions).
+# Publishes when either:
+#   1. Push a semver tag v*.*.* (commit must already contain matching "version" in package.json).
+#   2. Actions → Publish npm → Run workflow → uncheck dry_run (needs NPM_TOKEN).
 #
-# Manual "Run workflow" only validates and runs npm publish --dry-run (no secret required).
+# CI only tests and uploads a .tgz artifact — it never runs npm publish.
 
 on:
   push:
     tags:
       - "v*.*.*"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "dry-run = npm pack checks only; publish = upload to registry (needs NPM_TOKEN)"
+        type: choice
+        options:
+          - dry-run
+          - publish
+        default: dry-run
 
 permissions:
   contents: read
@@ -40,12 +49,18 @@ jobs:
           npm test
           npm run build
 
-      - name: Publish to npm (tag releases only)
-        if: github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
+      - name: Publish to npm (semver tag push)
+        if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish dry-run (manual workflow only)
-        if: github.event_name == 'workflow_dispatch'
+      - name: Publish to npm (manual — mode=publish)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'publish'
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish dry-run (manual — mode=dry-run)
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'dry-run'
         run: npm publish --dry-run --access public

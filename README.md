@@ -130,9 +130,11 @@ See [AGENTS.md](AGENTS.md) for contribution guidelines.
 
 ### CI and npm releases (maintainers)
 
-- **CI** (`[.github/workflows/ci.yml](.github/workflows/ci.yml)`): on every push/PR to `main` or `master`, runs root `npm test`, uploads an `npm pack` artifact, and runs dashboard `npm test` + `npm run build`.
-- **Publish** (`[.github/workflows/publish-npm.yml](.github/workflows/publish-npm.yml)`): bump `version` in root `[package.json](package.json)`, commit, then create and push a git tag `vMAJOR.MINOR.PATCH`. The workflow publishes `pilot-research` to the npm registry; configure an `**NPM_TOKEN`** (Automation) under GitHub **Settings → Secrets and variables → Actions**.
-- **Manual check**: run **Actions → Publish npm → Run workflow** to execute tests/build and `npm publish --dry-run` without publishing.
+- **CI does not publish to npm.** [`ci.yml`](.github/workflows/ci.yml) only runs tests, builds the dashboard, runs `npm pack`, and uploads the `.tgz` as a workflow artifact for inspection.
+- **Publishing** happens only in [`publish-npm.yml`](.github/workflows/publish-npm.yml):
+  1. Bump `"version"` in root [`package.json`](package.json), merge to `main`, then **`git tag vMAJOR.MINOR.PATCH && git push origin vMAJOR.MINOR.PATCH`** (tag must point at the commit that contains that version).
+  2. Or **Actions → Publish npm → Run workflow**, set **mode** to **`publish`** (default **`dry-run`** only validates; it does not upload).
+- Add repo secret **`NPM_TOKEN`** (npm [Automation token](https://docs.npmjs.com/creating-and-viewing-access-tokens)) under **Settings → Secrets and variables → Actions**. Without it, the tag or manual **publish** step fails.
 
 ## License
 
