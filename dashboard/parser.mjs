@@ -85,6 +85,7 @@ export function parseWiki(wikiDir) {
     filePath: p.filePath,
     tags: p.tags,
     date: p.date,
+    category: (p.tags && p.tags.length > 0) ? p.tags[0] : p.type,
   }));
 
   const edges = [];
@@ -153,4 +154,157 @@ export function getPageByPath(parsed, filePath) {
 
 export function getPageByTypeSlug(parsed, type, slug) {
   return parsed.pages.find(p => p.type === type && p.slug === slug) || null;
+}
+
+export function mapStatusToKanban(status) {
+  const s = (status || '').toLowerCase().trim();
+  if (s === '' || s === 'draft' || s === 'todo') return 'todo';
+  if (s === 'in-progress' || s === 'running') return 'pending';
+  if (s === 'complete' || s === 'done') return 'done';
+  if (s === 'archive') return 'archive';
+  return 'todo';
+}
+
+export function parseBacklogTable(body) {
+  const tasks = [];
+  const lines = body.split('\n');
+  let headers = null;
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+      headers = null;
+      continue;
+    }
+
+    const cells = trimmed.split('|').slice(1, -1).map(c => c.trim());
+
+    if (cells.every(c => /^[\s\-:]+$/.test(c))) {
+      continue;
+    }
+
+    if (!headers) {
+      headers = cells.map(c => c.toLowerCase());
+      continue;
+    }
+
+    if (headers) {
+      const row = {};
+      headers.forEach((h, i) => {
+        row[h] = cells[i] || '';
+      });
+      if (row.id || row.task) {
+        tasks.push(row);
+      }
+    }
+  }
+
+  return tasks;
+}
+
+export function getTasks(parsed) {
+  const tasks = [];
+  const taskTypes = ['experiment', 'plan'];
+
+  for (const page of parsed.pages) {
+    if (taskTypes.includes(page.type)) {
+      const desc = page.frontmatter.description;
+      const firstLine = page.body.split('\n').map(l => l.trim()).find(l => l && !l.startsWith('#'));
+      const description = desc || (firstLine ? firstLine.slice(0, 200) : '');
+      tasks.push({
+        id: `${page.type}-${page.slug}`,
+        title: page.title,
+        description,
+        category: page.frontmatter.category || page.type,
+        status: mapStatusToKanban(page.status),
+        assignee: page.frontmatter.assignee || '',
+        date: page.date,
+        filePath: page.filePath,
+        tags: page.tags,
+      });
+    }
+
+    if (page.type === 'plan' && page.body) {
+      const tableTasks = parseBacklogTable(page.body);
+      for (const row of tableTasks) {
+        tasks.push({
+          id: row.id || `backlog-${page.slug}-${tasks.length}`,
+          title: row.task || '',
+          description: '',
+          category: 'backlog',
+          status: mapStatusToKanban(row.status || ''),
+          assignee: row.assignee || '',
+          date: page.date,
+          filePath: page.filePath,
+          tags: page.tags,
+        });
+      }
+    }
+  }
+
+  return tasks;
+}
+
+export function buildFileTree(wikiDir) {
+  if (!fs.existsSync(wikiDir)) {
+    return { id: 'root', name: path.basename(wikiDir), type: 'folder', children: [] };
+  }
+
+  const rootName = path.basename(wikiDir);
+
+  function buildNode(dirPath, relPath) {
+    const name = relPath === 'root' ? rootName : path.basename(dirPath);
+    const node = {
+      id: relPath,
+      name,
+      type: 'folder',
+      children: [],
+    };
+
+    const entries = fs.readdirSync(dirPath).sort();
+    for (const entry of entries) {
+      const entryPath = path.join(dirPath, entry);
+      const entryRelPath = relPath === 'root' ? entry : `${relPath}/${entry}`;
+      const entryStat = fs.statSync(entryPath);
+
+      if (entryStat.isDirectory()) {
+        node.children.push(buildNode(entryPath, entryRelPath));
+      } else if (entryStat.isFile()) {
+        node.children.push({
+          id: entryRelPath,
+          name: entry,
+          type: 'file',
+        });
+      }
+    }
+
+    return node;
+  }
+
+  return buildNode(wikiDir, 'root');
+}
+
+export function getFileContent(wikiDir, relPath) {
+  const fullPath = path.resolve(wikiDir, relPath);
+  const resolvedWiki = path.resolve(wikiDir);
+
+  if (!fullPath.startsWith(resolvedWiki + path.sep) && fullPath !== resolvedWiki) {
+    return null;
+  }
+
+  if (!fs.existsSync(fullPath) || !fs.statSync(fullPath).isFile()) {
+    return null;
+  }
+
+  if (relPath.endsWith('.md')) {
+    const content = fs.readFileSync(fullPath, 'utf8');
+    const { frontmatter, body } = parseFrontmatter(content);
+    const wikilinks = extractWikilinks(content);
+    return { content, frontmatter, body, wikilinks };
+  }
+
+  const stat = fs.statSync(fullPath);
+  const content = fs.readFileSync(fullPath, 'utf8');
+  const ext = path.extname(fullPath).slice(1) || 'binary';
+  return { content, type: ext, size: stat.size };
 }

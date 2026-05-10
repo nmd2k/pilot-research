@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { parseWiki, searchWiki, getPageByPath, getPageByTypeSlug } from './parser.mjs';
+import { parseWiki, searchWiki, getPageByPath, getPageByTypeSlug, getTasks, buildFileTree, getFileContent } from './parser.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -14,6 +14,13 @@ const MIME_TYPES = {
   '.png': 'image/png',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.md': 'text/markdown',
+  '.txt': 'text/plain',
+  '.csv': 'text/csv',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.pdf': 'application/pdf',
 };
 
 let wikiCache = null;
@@ -72,7 +79,12 @@ function serveAPI(req, res, parsed) {
   res.setHeader('Content-Type', 'application/json');
 
   if (pathname === '/api/pages') {
-    const pages = parsed.pages.map(p => ({
+    const typeFilter = url.searchParams.get('type');
+    let filteredPages = parsed.pages;
+    if (typeFilter) {
+      filteredPages = parsed.pages.filter(p => p.type === typeFilter);
+    }
+    const pages = filteredPages.map(p => ({
       type: p.type,
       slug: p.slug,
       title: p.title,
@@ -90,6 +102,38 @@ function serveAPI(req, res, parsed) {
   const pageMatch = pathname.match(/^\/api\/page\/(.+)$/);
   if (pageMatch) {
     const decoded = decodeURIComponent(pageMatch[1]);
+
+    if (req.method === 'PUT') {
+      let body = '';
+      req.on('data', chunk => { body += chunk; });
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (!data.content) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: 'Missing content field' }));
+            return;
+          }
+          const filePath = path.join(wikiDir, decoded);
+          const resolved = path.resolve(filePath);
+          if (!resolved.startsWith(path.resolve(wikiDir) + path.sep) && resolved !== path.resolve(wikiDir)) {
+            res.writeHead(403);
+            res.end(JSON.stringify({ error: 'Forbidden' }));
+            return;
+          }
+          fs.mkdirSync(path.dirname(resolved), { recursive: true });
+          fs.writeFileSync(resolved, data.content, 'utf8');
+          wikiCache = null;
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Invalid JSON' }));
+        }
+      });
+      return true;
+    }
+
     const page = getPageByPath(parsed, decoded) || getPageByTypeSlug(parsed, ...decoded.split('/'));
     if (!page) {
       res.writeHead(404);
@@ -101,9 +145,70 @@ function serveAPI(req, res, parsed) {
     return true;
   }
 
-  if (pathname === '/api/graph') {
+  if (pathname === '/api/tasks') {
+    const tasks = getTasks(parsed);
     res.writeHead(200);
-    res.end(JSON.stringify(parsed.graph));
+    res.end(JSON.stringify({ tasks }));
+    return true;
+  }
+
+  if (pathname === '/api/graph') {
+    const filter = url.searchParams.get('filter');
+    let nodes = parsed.graph.nodes;
+    let edges = parsed.graph.edges;
+
+    if (filter) {
+      const filteredNodeIds = new Set(nodes.filter(n => n.type === filter).map(n => n.id));
+      nodes = nodes.filter(n => n.type === filter);
+      edges = edges.filter(e => filteredNodeIds.has(e.source) || filteredNodeIds.has(e.target));
+    }
+
+    res.writeHead(200);
+    res.end(JSON.stringify({ nodes, edges }));
+    return true;
+  }
+
+  if (pathname === '/api/file-tree') {
+    const tree = buildFileTree(wikiDir);
+    res.writeHead(200);
+    res.end(JSON.stringify(tree));
+    return true;
+  }
+
+  const fileMatch = pathname.match(/^\/api\/file\/(.+)$/);
+  if (fileMatch) {
+    const decoded = decodeURIComponent(fileMatch[1]);
+    const isRaw = url.searchParams.get('raw') === 'true';
+
+    if (isRaw) {
+      const filePath = path.join(wikiDir, decoded);
+      const resolved = path.resolve(filePath);
+      if (!resolved.startsWith(path.resolve(wikiDir) + path.sep) && resolved !== path.resolve(wikiDir)) {
+        res.writeHead(403);
+        res.end(JSON.stringify({ error: 'Forbidden' }));
+        return true;
+      }
+      if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+        res.writeHead(404);
+        res.end(JSON.stringify({ error: 'File not found' }));
+        return true;
+      }
+      const ext = path.extname(resolved);
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
+      res.writeHead(200);
+      res.end(fs.readFileSync(resolved));
+      return true;
+    }
+
+    const result = getFileContent(wikiDir, decoded);
+    if (!result) {
+      res.writeHead(404);
+      res.end(JSON.stringify({ error: 'File not found' }));
+      return true;
+    }
+    res.writeHead(200);
+    res.end(JSON.stringify(result));
     return true;
   }
 
@@ -128,7 +233,7 @@ function serveAPI(req, res, parsed) {
 
 export function startServer(options = {}) {
   wikiDir = options.wikiDir || null;
-  const port = options.port || 4213;
+  const port = options.port ?? 4213;
 
   if (!wikiDir) {
     const cwd = process.cwd();
