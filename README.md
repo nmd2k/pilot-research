@@ -62,13 +62,13 @@ irm https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.ps1 | ie
 Run `./install.sh --help` for Unix/WSL flags; see `install.ps1` parameters for Windows (`-List`, `-Force`, `-Only`, …).
 
 ## CLI: `pilot`
-
+<!--
 ### Via npm
 
 ```bash
 npm install -g pilot-research
 ```
-
+-->
 ### Commands
 
 
@@ -134,14 +134,6 @@ curl -fsSL https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.s
 ## Contributing
 
 See [AGENTS.md](AGENTS.md) for contribution guidelines.
-
-### CI and npm releases (maintainers)
-
-- **CI does not publish to npm.** [`ci.yml`](.github/workflows/ci.yml) only runs tests, builds the dashboard, runs `npm pack`, and uploads the `.tgz` as a workflow artifact for inspection.
-- **Publishing** happens only in [`publish-npm.yml`](.github/workflows/publish-npm.yml):
-  1. Bump `"version"` in root [`package.json`](package.json), merge to `main`, then **`git tag vMAJOR.MINOR.PATCH && git push origin vMAJOR.MINOR.PATCH`** (tag must point at the commit that contains that version).
-  2. Or **Actions → Publish npm → Run workflow**, set **mode** to **`publish`** (default **`dry-run`** only validates; it does not upload).
-- Add repo secret **`NPM_TOKEN`** (npm [Automation token](https://docs.npmjs.com/creating-and-viewing-access-tokens)) under **Settings → Secrets and variables → Actions**. Without it, the tag or manual **publish** step fails.
 
 ## License
 
