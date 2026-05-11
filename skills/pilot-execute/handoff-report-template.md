@@ -27,9 +27,9 @@ skill: ""
 - {Decision} — {Reason}
 
 ## Artifacts Produced
-- [[paper-{slug}]]
-- [[concept-{name}]]
-- [[exp-{name}]]
+- [[papers/{slug}]]
+- [[concepts/{name}]]
+- [[experiments/{name}]]
 
 ## Suggested Next Steps
 - {What the next agent should do}

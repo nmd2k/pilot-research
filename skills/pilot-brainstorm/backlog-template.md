@@ -1,6 +1,6 @@
 ---
 type: backlog
-plan: "[[plan-v<N>]]"
+plan: "[[plans/v<N>]]"
 date: YYYY-MM-DD
 ---
 
@@ -8,5 +8,5 @@ date: YYYY-MM-DD
 
 | ID | Task | Status | Assignee | Depends on | Links |
 |----|------|--------|----------|------------|-------|
-| T1 | {Description} | todo | human/agent | — | [[exp-{name}]] |
+| T1 | {Description} | todo | human/agent | — | [[experiments/{name}]] |
 | T2 | {Description} | todo | agent | T1 | |

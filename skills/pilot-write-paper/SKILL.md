@@ -17,7 +17,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
-4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
+4. **Always refer to wiki links** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using your platform's native link format (e.g., `[[papers/slug]]` or `papers/slug`). Every reference must link to the wiki, not use plain text.</EXTREMELY-IMPORTANT>
 
 5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
 
@@ -27,13 +27,13 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 All research content lives in `.research/` in the project root:
 
-- `papers/` — Paper summaries `[[paper-<slug>]]`
-- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
-- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
-- `queries/` — Saved Q&A results `[[query-<topic>]]`
-- `plans/` — Research plans `[[plan-v<N>]]`
-- `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
+- `papers/` — Paper summaries `[[papers/<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entities/<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concepts/<name>]]`
+- `queries/` — Saved Q&A results `[[queries/<topic>]]`
+- `plans/` — Research plans `[[plans/v<N>]]`
+- `experiments/` — Experiment reports `[[experiments/<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -57,7 +57,7 @@ Gather all relevant research artifacts from the wiki:
 - [ ] Entity pages (`.research/entities/`)
 - [ ] Any previous paper drafts
 
-<EXTREMELY-IMPORTANT>The paper must be grounded in the wiki. Every claim must reference `[[paper-<slug>]]`, `[[concept-<name>]]`, or `[[exp-<name>]]` wikilinks. Do not make unsupported claims.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>The paper must be grounded in the wiki. Every claim must reference `[[papers/<slug>]]`, `[[concepts/<name>]]`, or `[[experiments/<name>]]` wikilinks. Do not make unsupported claims.</EXTREMELY-IMPORTANT>
 
 ### Step 2: Clarify
 
@@ -86,7 +86,7 @@ Save the outline and present it to the researcher for approval before drafting.
 
 Write the paper section by section, pulling content from wiki artifacts:
 - [ ] Each section is grounded in wiki content
-- [ ] Citations use `[[paper-<slug>]]` wikilink format during drafting
+- [ ] Citations use `[[papers/<slug>]]` wikilink format during drafting
 - [ ] Claims are backed by evidence from experiment reports or literature
 - [ ] The narrative flows logically from section to section
 - [ ] Figures and tables are sketched or described where needed
@@ -115,7 +115,7 @@ Iterate based on the researcher's feedback:
 
 Write the paper draft to the wiki or project root as specified by the researcher:
 - [ ] Save the paper file
-- [ ] Convert `[[paper-<slug>]]` wikilinks to proper citation format (APA, IEEE, etc.) as requested
+- [ ] Convert `[[papers/<slug>]]` wikilinks to proper citation format (APA, IEEE, etc.) as requested
 - [ ] Save a reference copy in the wiki for traceability
 - [ ] Update the research plan with a link to the paper draft
 

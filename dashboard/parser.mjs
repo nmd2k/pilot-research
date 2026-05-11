@@ -92,7 +92,11 @@ export function parseWiki(wikiDir) {
   for (const page of pages) {
     const sourceId = `${page.type}-${page.slug}`;
     for (const link of page.wikilinks) {
-      const target = pages.find(p => `${p.type}-${p.slug}` === link || p.slug === link);
+      const target = pages.find(p =>
+        `${p.type}-${p.slug}` === link ||
+        p.slug === link ||
+        p.filePath.replace(/\.md$/, '') === link
+      );
       if (target) {
         edges.push({ source: sourceId, target: `${target.type}-${target.slug}` });
       } else {
@@ -149,11 +153,13 @@ export function searchWiki(parsed, query) {
 }
 
 export function getPageByPath(parsed, filePath) {
-  return parsed.pages.find(p => p.filePath === filePath) || null;
+  return parsed.pages.find(p => p.filePath === filePath || p.filePath === `${filePath}.md` || p.filePath.replace(/\.md$/, '') === filePath) || null;
 }
 
 export function getPageByTypeSlug(parsed, type, slug) {
-  return parsed.pages.find(p => p.type === type && p.slug === slug) || null;
+  const folderToType = { papers: 'paper', entities: 'entity', concepts: 'concept', queries: 'query', plans: 'plan', experiments: 'experiment', handoff: 'handoff' };
+  const resolvedType = folderToType[type] || type;
+  return parsed.pages.find(p => p.type === resolvedType && p.slug === slug) || null;
 }
 
 export function mapStatusToKanban(status) {

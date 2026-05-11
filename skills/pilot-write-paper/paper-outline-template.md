@@ -14,27 +14,27 @@ date: YYYY-MM-DD
 
 ### 1. Introduction
 - Key points: {point1}, {point2}
-- Sources: [[paper-{slug}]], [[concept-{name}]]
+- Sources: [[papers/{slug}]], [[concepts/{name}]]
 
 ### 2. Related Work
 - Key points: {what prior work exists}
-- Sources: [[paper-{slug}]], [[paper-{slug}]]
+- Sources: [[papers/{slug}]], [[papers/{slug}]]
 
 ### 3. Methodology
 - Key points: {our approach}
-- Sources: [[concept-{name}]], [[exp-{name}]]
+- Sources: [[concepts/{name}]], [[experiments/{name}]]
 
 ### 4. Experiments
 - Key points: {setup, results}
-- Sources: [[exp-{name}]], [[exp-{name}]]
+- Sources: [[experiments/{name}]], [[experiments/{name}]]
 
 ### 5. Results & Discussion
 - Key points: {findings, implications}
-- Sources: [[exp-{name}]]
+- Sources: [[experiments/{name}]]
 
 ### 6. Conclusion
 - Key points: {summary, future work}
 
 ## Citation Plan
-- All citations reference wiki pages via [[paper-{slug}]] links
+- All citations reference wiki pages via [[papers/{slug}]] links
 - Final paper will use proper citation format (APA, IEEE, etc.)

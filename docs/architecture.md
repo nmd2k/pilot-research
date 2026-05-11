@@ -50,18 +50,13 @@ pilot-research/
 │           ├── research-wiki-spec.md
 │           └── arxiv-tools.md
 │
-├── cli/                             # Pilot CLI (Go or Node.js)
-│   ├── main.go / main.mjs          # Entry point
-│   └── ...                          # Commands: init, status, dashboard
-│
+├── cli/                             # Pilot CLI (Node.js)
+│   ├── pilot.mjs                    # Entry point
+│   └── ...                          # Commands: init, ingest, query, status, dashboard
+
 ├── dashboard/                       # Web dashboard SPA
 │   ├── src/                         # Frontend (React/Vue/Svelte)
 │   └── dist/                        # Built static assets (embedded in CLI binary)
-│
-├── scripts/
-│   ├── arxiv-query.py
-│   ├── pdf-extract.py
-│   └── init-wiki.sh                 # Legacy, delegates to `pilot init` if available
 │
 ├── install.sh                       # One-line curl|bash installer
 ├── install.ps1                      # Windows PowerShell installer
@@ -122,9 +117,9 @@ Skills are pure markdown. Each platform gets:
 - A session-start hook that injects the announcement
 - The same `skills/` directory is shared across all platforms
 
-### D5: Script tools are invoked by agents
+### D5: Agent-native external tools
 
-`arxiv-query.py` and `pdf-extract.py` are scripts the agent calls directly. Skills reference them by path in pure prompt text. No abstraction layer for MVP.
+ArXiv search and paper reading use each agent platform's built-in capabilities (web search, web fetch). Pilot Research no longer bundles Python scripts for ArXiv querying or PDF extraction — these were redundant since modern agents have native web access.
 
 ### D6: Default wiki location is `.research/` in working directory
 
@@ -155,26 +150,26 @@ The dashboard is a static SPA served by `pilot dashboard`. The CLI binary embeds
 ```
 .research/
 ├── README.md              # Index, conventions, navigation
-├── papers/                # Paper summaries [[paper-<slug>]]
-├── entities/              # People, datasets, tools, institutions [[entity-<name>]]
-├── concepts/              # Methods, theories, frameworks [[concept-<name>]]
-├── queries/               # Saved Q&A results [[query-<topic>]]
-├── plans/                 # Research plans [[plan-v<N>]]
-├── experiments/           # Experiment reports [[exp-<name>]]
-└── handoff/               # Agent handoff artifacts [[handoff-<YYYY-MM-DD>]]
+├── papers/                # Paper summaries [[papers/<slug>]]
+├── entities/              # People, datasets, tools, institutions [[entities/<name>]]
+├── concepts/              # Methods, theories, frameworks [[concepts/<name>]]
+├── queries/               # Saved Q&A results [[queries/<topic>]]
+├── plans/                 # Research plans [[plans/v<N>]]
+├── experiments/           # Experiment reports [[experiments/<name>]]
+└── handoff/               # Agent handoff artifacts [[handoff/<YYYY-MM-DD>]]
 ```
 
 ### Naming Conventions
 
 | Type | Filename pattern | Wikilink pattern |
 |------|----------------|-----------------|
-| Paper | `papers/<arxiv-id-or-slug>.md` | `[[paper-<slug>]]` |
-| Entity | `entities/<name>.md` | `[[entity-<name>]]` |
-| Concept | `concepts/<name>.md` | `[[concept-<name>]]` |
-| Query | `queries/<topic>.md` | `[[query-<topic>]]` |
-| Plan | `plans/v<N>.md` | `[[plan-v<N>]]` |
-| Experiment | `experiments/<name>.md` | `[[exp-<name>]]` |
-| Handoff | `handoff/<YYYY-MM-DD>.md` | `[[handoff-<YYYY-MM-DD>]]` |
+| Paper | `papers/<arxiv-id-or-slug>.md` | `[[papers/<slug>]]` |
+| Entity | `entities/<name>.md` | `[[entities/<name>]]` |
+| Concept | `concepts/<name>.md` | `[[concepts/<name>]]` |
+| Query | `queries/<topic>.md` | `[[queries/<topic>]]` |
+| Plan | `plans/v<N>.md` | `[[plans/v<N>]]` |
+| Experiment | `experiments/<name>.md` | `[[experiments/<name>]]` |
+| Handoff | `handoff/<YYYY-MM-DD>.md` | `[[handoff/<YYYY-MM-DD>]]` |
 
 ### Wikilink Rules
 
@@ -286,6 +281,8 @@ The `pilot` CLI provides a unified interface for all pilot-research operations:
 | Command | Description |
 |---------|-------------|
 | `pilot init [path]` | Initialize a research wiki at `[path]` (default: `./.research/`) |
+| `pilot ingest <type> <name>` | Create a new wiki page from the appropriate template |
+| `pilot query <search-terms>` | Search the wiki for pages matching terms |
 | `pilot status` | Print wiki overview (page counts, latest handoff, backlog summary) |
 | `pilot dashboard [--launch]` | Start or check status of the research dashboard |
 | `pilot --version` | Print version |

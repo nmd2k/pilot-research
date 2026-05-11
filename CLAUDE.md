@@ -17,4 +17,4 @@ Skills live in `skills/`. Each skill is self-contained with its own SKILL.md and
 
 Templates are inside each skill directory.
 
-The wiki structure template is in `wiki/`. Initialize with `scripts/init-wiki.sh`.
+The wiki structure template is in `wiki/`. Initialize with `pilot init`.

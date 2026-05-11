@@ -2,7 +2,7 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync, spawnSync } from 'child_process';
+import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -341,24 +341,6 @@ function cmdDashboard(args) {
   });
 }
 
-function cmdPythonScript(scriptName, args) {
-  const scriptPath = path.join(PROJECT_ROOT, 'scripts', `${scriptName}.py`);
-  if (!fs.existsSync(scriptPath)) {
-    log('error', `Script not found: ${scriptPath}`);
-    process.exit(1);
-  }
-
-  // Use python3 on Unix, python on Windows
-  const pythonCmd = process.platform === 'win32' ? 'python' : 'python3';
-  
-  const result = spawnSync(pythonCmd, [scriptPath, ...args], { stdio: 'inherit' });
-  if (result.error) {
-    log('error', `Failed to execute python: ${result.error.message}`);
-    process.exit(1);
-  }
-  process.exit(result.status || 0);
-}
-
 function printHelp() {
   console.log(`${BOLD}pilot${RESET} — Research workflow CLI for pilot-research
 
@@ -370,9 +352,7 @@ ${BOLD}Commands:${RESET}
   ingest <type> <name> Create a new wiki page from a template
   query <terms>       Search the wiki for matching pages
   status              Print wiki overview (page counts, latest handoff)
-  dashboard [--launch] Dashboard web UI (coming soon)
-  arxiv-query [args]  Search ArXiv for papers
-  pdf-extract [args]  Extract text from a PDF file
+  dashboard [--launch] Dashboard web UI
 
 ${BOLD}Page types for ingest:${RESET}
   paper, entity, concept, query, plan, experiment
@@ -469,8 +449,6 @@ switch (command) {
   case 'query': cmdQuery(subArgs); break;
   case 'status': cmdStatus(subArgs); break;
   case 'dashboard': cmdDashboard(subArgs); break;
-  case 'arxiv-query': cmdPythonScript('arxiv-query', subArgs); break;
-  case 'pdf-extract': cmdPythonScript('pdf-extract', subArgs); break;
   default:
     log('error', `Unknown command: ${command}`);
     console.log('Run `pilot --help` for available commands.');

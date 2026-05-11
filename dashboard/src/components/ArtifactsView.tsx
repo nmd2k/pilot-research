@@ -238,7 +238,11 @@ export default function ArtifactsView() {
 
   const handleWikilink = useCallback((slug: string) => {
     const page = pages.find(
-      (p) => p.slug === slug || p.filePath?.includes(slug)
+      (p) =>
+        p.slug === slug ||
+        `${p.type}-${p.slug}` === slug ||
+        p.filePath?.replace(/\.md$/, '') === slug ||
+        p.filePath?.includes(slug)
     );
     if (page && page.filePath) {
       selectFile({

@@ -40,4 +40,4 @@ tags: []
 | {risk} | {mitigation} |
 
 ## Related Plan
-[[plan-v<N>]]
+[[plans/v<N>]]

@@ -30,8 +30,8 @@ tags: []
 - {Issue 1}
 
 ## Artifacts Produced
-- [[exp-{name}]]
+- [[experiments/{name}]]
 - {links to code, weights, data files}
 
 ## Related Plan
-[[plan-v<N>]]
+[[plans/v<N>]]

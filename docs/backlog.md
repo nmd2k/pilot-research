@@ -7,7 +7,7 @@
 | P1 | Core skills (bootstrap + 5 skills) | Done |
 | P2 | Self-contained templates per skill | Done |
 | P3 | Wiki structure & init script | Done |
-| P4 | ArXiv integration scripts | Done |
+| P4 | ArXiv integration tools (deprecated — now uses agent-native search) | Deprecated |
 | P5 | Platform integration (OpenCode, Claude Code) | Done |
 | P6 | Testing with dummy research project | Done |
 | P7 | Documentation | Done |
@@ -134,22 +134,24 @@ Each template lives inside its skill directory. All templates use YAML frontmatt
 
 ---
 
-## P4 — ArXiv Integration
+## P4 — ArXiv Integration (Deprecated)
 
-### 4.1 `scripts/arxiv-query.py`
+**Decision:** The bundled `arxiv-query.py` and `pdf-extract.py` scripts have been removed. Modern agent platforms (OpenCode, Claude Code, Cursor, Codex) have native web search and web fetch capabilities that make these scripts redundant. The `pilot-literature` skill now instructs agents to use their built-in web search (e.g., `site:arxiv.org <keywords>`) and web fetch (ArXiv HTML or PDF) directly. The `arxiv-tools.md` reference doc now contains agent-native search instructions instead of CLI commands.
+
+### 4.1 ~~`scripts/arxiv-query.py`~~ — Removed
 
 **Priority:** High  
 **Description:** Python script that queries the ArXiv API. Accepts search terms, date range, max results. Returns structured JSON with: arxiv_id, title, authors, abstract, published date, categories, pdf_url. Supports pagination. Agent calls this script, then decides which papers to read.
 
-### 4.2 `scripts/pdf-extract.py`
+### 4.2 ~~`scripts/pdf-extract.py`~~ — Removed
 
 **Priority:** Medium  
 **Description:** Python script that downloads a PDF from a URL and extracts text. Accepts a URL or local path. Returns plain text. Used by agents to read paper content after finding them via ArXiv.
 
-### 4.3 `using-pilot-research/references/arxiv-tools.md`
+### 4.3 `using-pilot-research/references/arxiv-tools.md` (Rewritten)
 
 **Priority:** High  
-**Description:** Reference doc included by the bootstrap skill. Documents how to use `arxiv-query.py` and `pdf-extract.py`: command syntax, expected input/output, example invocations. The pilot-literature skill references this doc to instruct agents on paper search workflow.
+**Description:** Reference doc included by the bootstrap skill. Now documents agent-native search methods (web search, ArXiv API, web fetch for reading papers) instead of CLI script syntax. Modern agent platforms have built-in capabilities that make bundled scripts unnecessary.
 
 ---
 
@@ -236,7 +238,7 @@ Each template lives inside its skill directory. All templates use YAML frontmatt
 **Description:** A single CLI binary (`pilot`) that provides all user-facing commands. The binary must:
 
 - Be distributable as a static binary (Go or Rust) or a Node.js script (`pilot.mjs`) runnable via `npx` — choose the simplest path that supports macOS, Linux, WSL
-- Have zero required runtime dependencies beyond the stdlib (Python scripts like `arxiv-query.py` stay as-is; the CLI just calls them)
+- Have zero required runtime dependencies beyond the stdlib
 - Support these commands at minimum:
   - `pilot init [path]` — Initialize a research wiki at `[path]` (default: `./.research/`). Creates directory structure, copies README template, optionally appends to `.gitignore`. Replaces `scripts/init-wiki.sh`.
   - `pilot dashboard [--launch]` — Launch the research dashboard web UI (see P10). Without `--launch`, prints dashboard status/URL. With `--launch`, starts the server.

@@ -21,8 +21,8 @@ tags: []
 {How will we test it? High-level approach.}
 
 ## Key Literature
-- [[paper-{slug}]]
-- [[concept-{name}]]
+- [[papers/{slug}]]
+- [[concepts/{name}]]
 
 ## Experiment Design (outline)
 {What experiments do we need? Link to experiment pages.}
@@ -31,4 +31,4 @@ tags: []
 {What results would confirm/reject the hypothesis?}
 
 ## Backlog
-[[plan-v{version}-backlog]]
+[[plans/v{version}-backlog]]

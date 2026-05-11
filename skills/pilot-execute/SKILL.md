@@ -17,7 +17,7 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
 
-4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
+4. **Always refer to wiki links** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using your platform's native link format (e.g., `[[papers/slug]]` or `papers/slug`). Every reference must link to the wiki, not use plain text.</EXTREMELY-IMPORTANT>
 
 5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
 
@@ -27,13 +27,13 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 All research content lives in `.research/` in the project root:
 
-- `papers/` — Paper summaries `[[paper-<slug>]]`
-- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
-- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
-- `queries/` — Saved Q&A results `[[query-<topic>]]`
-- `plans/` — Research plans `[[plan-v<N>]]`
-- `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
+- `papers/` — Paper summaries `[[papers/<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entities/<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concepts/<name>]]`
+- `queries/` — Saved Q&A results `[[queries/<topic>]]`
+- `plans/` — Research plans `[[plans/v<N>]]`
+- `experiments/` — Experiment reports `[[experiments/<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>
 
@@ -85,7 +85,7 @@ Each worker must:
 Gather all relevant state:
 - [ ] Read the latest plan from `.research/plans/v<N>.md`
 - [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md`
-- [ ] Read any `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` reports
+- [ ] Read any `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]` reports
 - [ ] Review any in-progress experiment reports in `.research/experiments/`
 - [ ] Note which tasks are done, in-progress, and pending
 

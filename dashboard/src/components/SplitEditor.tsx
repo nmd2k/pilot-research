@@ -114,7 +114,11 @@ export default function SplitEditor({ title: initialTitle = '', content: initial
     }
     if (pages) {
       const page = pages.find(
-        (p: any) => p.slug === slug || p.filePath?.includes(slug)
+        (p: any) =>
+          p.slug === slug ||
+          `${p.type}-${p.slug}` === slug ||
+          p.filePath?.replace(/\.md$/, '') === slug ||
+          p.filePath?.includes(slug)
       );
       if (page && page.filePath) {
         setTitle(page.title || slug);

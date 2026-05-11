@@ -1,227 +1,90 @@
-# ArXiv Tools Reference
+# ArXiv and Literature Search
 
-## arxiv-query.py
+Pilot Research no longer bundles its own ArXiv query or PDF extraction scripts. Modern agent platforms (OpenCode, Claude Code, Cursor, Codex) have native web search and web fetch capabilities. Use those natively instead.
 
-### Command Syntax
+## Finding Papers
 
-```
-pilot arxiv-query <SEARCH_TERMS> [OPTIONS]
-```
+### Web Search (Agent-Native)
 
-### Options
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--max-results` | int | 10 | Maximum number of results to return |
-| `--sort-by` | relevance, date | relevance | Sort order for results |
-| `--start-date` | YYYY-MM-DD | None | Filter papers published after this date |
-| `--end-date` | YYYY-MM-DD | None | Filter papers published before this date |
-| `--offset` | int | 0 | Offset for pagination |
-
-### Search Terms
-
-Search terms are positional arguments. Combine multiple terms with AND logic:
-
-```bash
-pilot arxiv-query "transformer" "attention mechanism"
-```
-
-Use ArXiv category prefixes for targeted searches:
-
-```bash
-pilot arxiv-query "cat:cs.AI" "reinforcement learning"
-```
-
-### Expected Output
-
-The script returns JSON to stdout:
-
-```json
-{
-  "total_results": 142,
-  "papers": [
-    {
-      "arxiv_id": "2310.12345",
-      "title": "Paper Title",
-      "authors": ["Author One", "Author Two"],
-      "abstract": "Paper abstract text...",
-      "published": "2023-10-15",
-      "categories": ["cs.AI", "cs.LG"],
-      "pdf_url": "http://arxiv.org/pdf/2310.12345v1.pdf"
-    }
-  ]
-}
-```
-
-### Example Invocations
-
-Search for papers on transformer attention mechanisms:
-
-```bash
-pilot arxiv-query "transformer" "attention mechanism" --max-results 5 --sort-by relevance
-```
-
-Search for recent papers in a specific category:
-
-```bash
-pilot arxiv-query "cat:cs.CL" "large language models" --sort-by date --max-results 10
-```
-
-Paginated search with date range:
-
-```bash
-pilot arxiv-query "neural architecture search" --start-date 2023-01-01 --end-date 2023-12-31 --offset 10 --max-results 10
-```
-
-### Error Handling
-
-- Network timeout: prints error to stderr, exits with code 1
-- No results: prints JSON with empty papers array, prints message to stderr
-- Invalid date format: prints error to stderr, exits with code 1
-
----
-
-## pdf-extract.py
-
-### Command Syntax
+Use your agent's built-in web search to find papers:
 
 ```
-pilot pdf-extract <SOURCE> [OPTIONS]
+site:arxiv.org <keywords>
 ```
 
-### Options
+Example: `site:arxiv.org diffusion models image generation`
 
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--format` | text, json | text | Output format |
-| `--pages-only` | flag | off | Print page separators (useful with text format) |
+Ask the researcher:
+- Specific keywords or topics
+- Preferred sources (ArXiv, specific conferences, provided URLs)
+- Time range constraints (e.g., "only papers from 2024 onwards")
+- How many papers are expected
 
-### Source
+### ArXiv API (Direct)
 
-The source can be:
-- A URL starting with `http://` or `https://` (PDF will be downloaded)
-- A local file path to an existing PDF
-
-### Expected Output
-
-Text format (default):
+If your agent supports HTTP requests, query the ArXiv API directly:
 
 ```
-Extracted text content page by page...
+GET http://export.arxiv.org/api/query?search_query=all:KEYWORDS&max_results=20&sortBy=relevance
 ```
 
-JSON format (`--format json`):
+The API returns Atom XML. Parse `atom:entry` elements to extract:
+- `arxiv_id` from `id` tag (last path segment)
+- `title`, `summary` (abstract), `published`, `author/name`
+- `category` (subject areas)
 
-```json
-{
-  "source": "http://arxiv.org/pdf/2310.12345v1.pdf",
-  "total_pages": 12,
-  "pages": [
-    {"page": 1, "text": "Page 1 content..."},
-    {"page": 2, "text": "Page 2 content..."}
-  ]
-}
+PDF URL is `http://arxiv.org/pdf/ID.pdf` (replace `/abs/` with `/pdf/` in the entry's link).
+
+## Reading Papers
+
+### Preferred: ArXiv HTML
+
+Most recent ArXiv papers have HTML versions:
+
+```
+https://arxiv.org/html/2310.12345v1
 ```
 
-If PyPDF2 is not installed:
+Use your agent's built-in web fetch tool to read the HTML page. This preserves math, formatting, and is much cleaner than PDF extraction.
 
-```json
-{
-  "source": "http://arxiv.org/pdf/2310.12345v1.pdf",
-  "error": "PyPDF2 not installed",
-  "hint": "pip install PyPDF2",
-  "pages": []
-}
-```
+### Fallback: PDF via Web Fetch
 
-### Example Invocations
+If HTML is unavailable, fetch the PDF URL directly. Most agent platforms can handle PDF content natively through web fetch.
 
-Extract text from an ArXiv PDF:
+### Last Resort
 
-```bash
-pilot pdf-extract "http://arxiv.org/pdf/2310.12345v1.pdf"
-```
-
-Extract from a local PDF in JSON format:
-
-```bash
-pilot pdf-extract ./downloads/paper.pdf --format json
-```
-
-Extract with page separators:
-
-```bash
-pilot pdf-extract "http://arxiv.org/pdf/2310.12345v1.pdf" --pages-only
-```
-
-### Dependencies
-
-- **Python 3.7+**: Required
-- **PyPDF2**: Optional, but required for actual PDF text extraction. Install with `pip install PyPDF2`
-- No other external dependencies; the scripts use only the Python standard library for network requests and XML parsing.
-
----
+Ask the researcher to provide a plain-text version or copy-paste key sections.
 
 ## Literature Review Workflow
 
-The standard workflow for processing research papers:
-
 ### 1. Search
 
-```bash
-pilot arxiv-query "your search terms" --max-results 10 --sort-by relevance
-```
-
-Review the JSON output and identify relevant papers by title and abstract.
+Use web search or ArXiv API to find papers matching the research plan's keywords.
 
 ### 2. Select
 
-From the query results, identify papers worth reading based on:
-- Relevance of the abstract to your research
-- Citation count (if available)
-- Recency
-- Category fit
+Present found papers to the researcher for selection before deep reading:
+- List each paper with title, authors, year, and a brief relevance note
+- Ask which papers to read in full
+- Note any papers already summarized in the wiki
 
 ### 3. Read
 
-For each selected paper, download and extract the text:
-
-```bash
-pilot pdf-extract "http://arxiv.org/pdf/PAPER_IDv1.pdf" --format json
-```
-
-Or use a local PDF if already downloaded.
+For each selected paper, read via ArXiv HTML (preferred) or web fetch.
 
 ### 4. Summarize
 
-Create a paper summary in the wiki at `papers/<arxiv-id-or-slug>.md`:
-
-```yaml
----
-type: paper
-title: "Paper Title"
-date: 2025-01-15
-tags: [relevant, tags]
-arxiv_id: "XXXX.XXXXX"
-authors: [Author One, Author Two]
-year: 2025
-status: complete
----
-```
-
-Include sections: one-line summary, key contribution, methodology, results, relevance to current research, and connections.
+Create a paper summary in the wiki at `papers/<arxiv-id-or-slug>.md`.
 
 ### 5. Extract
 
 From each paper summary, extract and create or update:
-
 - **Entities**: Authors, datasets, tools mentioned → `entities/<name>.md`
 - **Concepts**: Methods, theories, frameworks → `concepts/<name>.md`
 
 ### 6. Link
 
 Connect everything with wikilinks:
-
 - Paper summary links to entities and concepts
 - Entity pages link back to papers (backlinks)
 - Concept pages link to related papers and entities

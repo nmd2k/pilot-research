@@ -2,19 +2,19 @@
 
 ## Overview
 
-The research wiki is a markdown-based knowledge graph using `[[wikilinks]]` and YAML frontmatter. It is stored in the project directory and is compatible with Obsidian, VSCode wiki extensions, and plain git.
+The research wiki is a markdown-based knowledge graph using wiki links (typically `[[path/to/page]]` or `path/to/page`) and YAML frontmatter. It is stored in the project directory and is compatible with Obsidian, VSCode wiki extensions, and plain git.
 
 ## Folder Structure and Purpose
 
 | Folder | Purpose | Artifact type | Wikilink pattern |
 |--------|---------|---------------|------------------|
-| `papers/` | Paper summaries and reviews | Paper | `[[paper-<slug>]]` |
-| `entities/` | People, datasets, tools, institutions | Entity | `[[entity-<name>]]` |
-| `concepts/` | Methods, theories, frameworks | Concept | `[[concept-<name>]]` |
-| `queries/` | Saved Q&A results | Query | `[[query-<topic>]]` |
-| `plans/` | Research plans | Plan | `[[plan-v<N>]]` |
-| `experiments/` | Experiment reports | Experiment | `[[exp-<name>]]` |
-| `handoff/` | Agent handoff artifacts | Handoff | `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` |
+| `papers/` | Paper summaries and reviews | Paper | `[[papers/<slug>]]` |
+| `entities/` | People, datasets, tools, institutions | Entity | `[[entities/<name>]]` |
+| `concepts/` | Methods, theories, frameworks | Concept | `[[concepts/<name>]]` |
+| `queries/` | Saved Q&A results | Query | `[[queries/<topic>]]` |
+| `plans/` | Research plans | Plan | `[[plans/v<N>]]` |
+| `experiments/` | Experiment reports | Experiment | `[[experiments/<name>]]` |
+| `handoff/` | Agent handoff artifacts | Handoff | `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]` |
 
 ## Naming Conventions
 
@@ -22,59 +22,63 @@ The research wiki is a markdown-based knowledge graph using `[[wikilinks]]` and 
 
 Use the ArXiv ID if available, otherwise a slug derived from the title:
 
-- `papers/2310.12345.md` → `[[paper-2310-12345]]`
-- `papers/attention-is-all-you-need.md` → `[[paper-attention-is-all-you-need]]`
+- `papers/2310.12345.md` → `[[papers/2310-12345]]`
+- `papers/attention-is-all-you-need.md` → `[[papers/attention-is-all-you-need]]`
 
 ### Entity filenames
 
 Use a lowercase hyphenated name:
 
-- `entities/vaswani-ashish.md` → `[[entity-vaswani-ashish]]`
-- `entities/wmt14-dataset.md` → `[[entity-wmt14-dataset]]`
+- `entities/vaswani-ashish.md` → `[[entities/vaswani-ashish]]`
+- `entities/wmt14-dataset.md` → `[[entities/wmt14-dataset]]`
 
 ### Concept filenames
 
 Use a lowercase hyphenated name:
 
-- `concepts/self-attention.md` → `[[concept-self-attention]]`
-- `concepts/beam-search.md` → `[[concept-beam-search]]`
+- `concepts/self-attention.md` → `[[concepts/self-attention]]`
+- `concepts/beam-search.md` → `[[concepts/beam-search]]`
 
 ### Query filenames
 
 Use a lowercase hyphenated topic:
 
-- `queries/transformer-variants.md` → `[[query-transformer-variants]]`
+- `queries/transformer-variants.md` → `[[queries/transformer-variants]]`
 
 ### Plan filenames
 
 Use version numbers:
 
-- `plans/v1.md` → `[[plan-v1]]`
+- `plans/v1.md` → `[[plans/v1]]`
 
 ### Experiment filenames
 
 Use a lowercase hyphenated name:
 
-- `experiments/lr-sweep-baseline.md` → `[[exp-lr-sweep-baseline]]`
+- `experiments/lr-sweep-baseline.md` → `[[experiments/lr-sweep-baseline]]`
 
 ### Handoff filenames
 
 Use short date + skill + agent name:
 
-- `handoff/26-05-10-execute-gsm8kexp.md` → `[[handoff-26-05-10-execute-gsm8kexp]]`
+- `handoff/26-05-10-execute-gsm8kexp.md` → `[[handoff/26-05-10-execute-gsm8kexp]]`
 
 ## Wikilink Syntax and Rules
 
 ### Syntax
 
-Enclose a page reference in double brackets: `[[paper-attention-is-all-you-need]]`
+Use your platform's native link format. Examples:
+- `[[papers/attention-is-all-you-need]]` (double-bracket, Obsidian-style)
+- `papers/attention-is-all-you-need.md` (path-style, some agent platforms)
+
+The key requirement is that the link resolves to the correct wiki page.
 
 ### Rules
 
-1. **Every mention must link**: When you mention a paper, entity, or concept in any wiki page, you MUST create a wikilink to it.
+1. **Every mention must link**: When you mention a paper, entity, or concept in any wiki page, you MUST create a wiki link to it (in your platform's native format).
 2. **New paper ingestion must update existing pages**: When a new paper is added, check all existing entity and concept pages for relevance and update them with new information from the paper.
 3. **Bidirectional linking**: If page A links to page B, page B should list page A in its backlinks section.
-4. **Consistent naming**: Always use the exact wikilink pattern defined in the naming conventions table.
+4. **Consistent naming**: Always use the exact link pattern defined in the naming conventions table.
 
 ## YAML Frontmatter Required Fields
 
@@ -174,9 +178,9 @@ status: complete
 
 ## How to Create a New Paper Summary
 
-1. Run `arxiv-query.py` or obtain the paper details
+1. Find papers via web search or ArXiv API, or obtain paper details from the researcher
 2. Create `papers/<arxiv-id-or-slug>.md` with the paper type frontmatter
-3. Fill in: title, authors, year, one-line summary, key contribution, methodology, results, relevance to current research
+3. Fill in: title, authors, year, deep-dive summary (background, methodology, results, critical analysis), key contribution, relevance to current research
 4. Add a connections section with wikilinks to related papers, entities, and concepts
 5. Check existing entities and concepts — update any that are related to this paper
 6. Create new entity pages for notable authors or datasets mentioned
@@ -188,8 +192,8 @@ status: complete
 
 1. Create `entities/<name>.md` with the entity type frontmatter
 2. Fill in: name, type (person/dataset/tool/institution), description, key contributions
-3. Add related papers as wikilinks: `[[paper-<slug>]]`
-4. Add related concepts as wikilinks: `[[concept-<name>]]`
+3. Add related papers as wikilinks: `[[papers/<slug>]]`
+4. Add related concepts as wikilinks: `[[concepts/<name>]]`
 
 ### Updating an existing entity
 

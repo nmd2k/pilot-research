@@ -62,13 +62,9 @@ irm https://raw.githubusercontent.com/nmd2k/pilot-research/main/install.ps1 | ie
 Run `./install.sh --help` for Unix/WSL flags; see `install.ps1` parameters for Windows (`-List`, `-Force`, `-Only`, …).
 
 ## CLI: `pilot`
-<!--
-### Via npm
 
-```bash
-npm install -g pilot-research
-```
--->
+
+
 ### Commands
 
 
@@ -122,6 +118,7 @@ The dashboard server exposes a REST API at `http://localhost:4213/api/`:
 | `GET /api/graph`        | Wikilink graph as nodes + edges                  |
 | `GET /api/search?q=...` | Full-text search                                 |
 | `GET /api/stats`        | Page counts, latest handoff, backlog summary     |
+
 
 ## Uninstallation
 

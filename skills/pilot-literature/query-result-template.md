@@ -11,9 +11,9 @@ tags: []
 {Synthesized answer from wiki knowledge.}
 
 ## Sources
-- [[paper-{slug}]]
-- [[concept-{name}]]
-- [[entity-{name}]]
+- [[papers/{slug}]]
+- [[concepts/{name}]]
+- [[entities/{name}]]
 
 ## Confidence
 {High / Medium / Low — and reason}

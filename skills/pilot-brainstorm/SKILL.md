@@ -27,13 +27,13 @@ These rules apply to every skill. Violating any of these blocks progress.
 
 All research content lives in `.research/` in the project root:
 
-- `papers/` — Paper summaries `[[paper-<slug>]]`
-- `entities/` — People, datasets, tools, institutions `[[entity-<name>]]`
-- `concepts/` — Methods, theories, frameworks `[[concept-<name>]]`
-- `queries/` — Saved Q&A results `[[query-<topic>]]`
-- `plans/` — Research plans `[[plan-v<N>]]`
-- `experiments/` — Experiment reports `[[exp-<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]`
+- `papers/` — Paper summaries `[[papers/<slug>]]`
+- `entities/` — People, datasets, tools, institutions `[[entities/<name>]]`
+- `concepts/` — Methods, theories, frameworks `[[concepts/<name>]]`
+- `queries/` — Saved Q&A results `[[queries/<topic>]]`
+- `plans/` — Research plans `[[plans/v<N>]]`
+- `experiments/` — Experiment reports `[[experiments/<name>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## Before You Begin
 
@@ -103,8 +103,8 @@ Focus on:
 Read all relevant existing artifacts:
 - Latest plan from `.research/plans/`
 - Latest backlog from `.research/plans/v<N>-backlog.md`
-- Relevant `[[paper-<slug>]]`, `[[concept-<name>]]`, `[[entity-<name>]]` pages
-- Any `[[handoff-<YY-MM-DD>-<skill>-<agent-name>]]` reports
+- Relevant `[[papers/<slug>]]`, `[[concepts/<name>]]`, `[[entities/<name>]]` pages
+- Any `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]` reports
 
 ### Step 2: Clarify
 
