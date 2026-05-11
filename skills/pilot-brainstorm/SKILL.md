@@ -5,7 +5,7 @@ description: "Use when researcher wants to discuss a research idea, explore a hy
 
 # Brainstorming
 
-This skill guides structured ideation, research planning, and experiment design through Socratic dialogue with the researcher.
+This skill acts as your research co-author — helping you explore ideas, answer questions from the wiki, design experiments, and refine research plans.
 
 ## <HARD-GATE>Mandatory Rules</HARD-GATE>
 
@@ -38,154 +38,48 @@ All research content lives in `.research/` in the project root:
 ## Before You Begin
 
 - [ ] Read the latest research plan from `.research/plans/` (if any)
-- [ ] Read relevant wiki artifacts from `.research/` (papers, concepts, entities, queries, plans, experiments)
 - [ ] Check `.research/handoff/` for a previous handoff report
-- [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md` (if any)
-- [ ] Ask whether new findings should be appended to the wiki
-
-## Use Cases
-
-Determine which use case applies based on the current state:
-
-### Case 1: New Research Plan
-
-**Trigger:** No existing plan found in `.research/plans/`, or researcher explicitly wants to start fresh.
-
-Focus on:
-- What is the research question?
-- What is the hypothesis?
-- Why does this matter? What gap does it address?
-- What is the high-level methodology?
-
-<EXTREMELY-IMPORTANT>Do not skip the motivation. A plan without clear motivation will produce unfocused experiments.</EXTREMELY-IMPORTANT>
-
-### Case 2: Experiment Design
-
-**Trigger:** Existing plan found, researcher wants to design specific experiments.
-
-Focus on:
-- What methodology will we use?
-- What are the independent, dependent, and controlled variables?
-- What are the controls and baselines?
-- What are the success criteria?
-- What are the risks and mitigations?
-
-<EXTREMELY-IMPORTANT>Every experiment must link back to the research hypothesis. If you cannot map an experiment to a hypothesis, question whether it is needed.</EXTREMELY-IMPORTANT>
-
-### Case 3: Update Existing Plan
-
-**Trigger:** Existing plan found, researcher wants to modify it (change hypothesis, adjust methodology, add scope, etc.).
-
-Focus on:
-- What specifically changed?
-- Why did it change?
-- What is the impact on the existing backlog?
-- Which tasks need to be added, removed, or modified?
-
-<EXTREMELY-IMPORTANT>When updating a plan, always create a new version (`v<N+1>.md`). Never overwrite an existing plan. Update the backlog to match.</EXTREMELY-IMPORTANT>
-
-### Case 4: Query
-
-**Trigger:** Researcher asks a question, wants to discuss, or brainstorms around an idea without necessarily requesting plan/backlog edits.
-
-Focus on:
-- Search relevant content in `.research/` first and answer from existing artifacts
-- Ground answers in existing wiki pages and use `[[wikilinks]]` when citing
-- If the answer is not available in the wiki, ask for permission before web search
-- After answering, ask: "Do you want to add this into our wiki?"
-
-<EXTREMELY-IMPORTANT>Do not hallucinate missing facts. If wiki evidence is insufficient, explicitly say so and ask whether to search the web.</EXTREMELY-IMPORTANT>
+- [ ] Search the wiki for relevant papers, concepts, or entities related to the researcher's topic
 
 ## Process Flow
 
-### Step 1: Read Context
+The flow progresses naturally from orientation to discussion, and only continues to design and update when the researcher agrees on a direction. You can stop at any phase.
 
-Read all relevant existing artifacts:
-- Latest plan from `.research/plans/`
-- Latest backlog from `.research/plans/v<N>-backlog.md`
-- Relevant `[[papers/<slug>]]`, `[[concepts/<name>]]`, `[[entities/<name>]]` pages
-- Any `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]` reports
+### 1. Orient
 
-### Step 2: Clarify
+- Read the latest plan and backlog to understand the current project stage
+- Search `.research/` for relevant papers, concepts, entities, or past queries
+- Surface what the wiki already knows early in the conversation
 
-Ask the researcher about:
-- [ ] Their goals and what they want to achieve
-- [ ] Any constraints (time, resources, data availability)
-- [ ] Ambiguous points in their request
-- [ ] Whether this is Case 1, 2, 3, or 4 (Query)
-- [ ] Whether they want new findings appended to wiki pages
+### 2. Discuss
 
-### Step 3: Discuss
+**If the researcher is asking a question or exploring a concept:**
+- Answer from the wiki first, with reasoning and recommendations
+- Ground answers in wiki pages and use `[[wikilinks]]` when citing
+- If the wiki lacks evidence, say so and ask before searching the web
+- After answering, ask: *"Do you want to add this into our wiki?"*
+- **Stop here** unless the researcher wants to go deeper
 
-Engage in Socratic dialogue:
-- Propose ideas and ask "what if?"
-- Challenge assumptions
-- Suggest alternatives and trade-offs
+**If the researcher wants to brainstorm or explore a research direction:**
+- Propose 2-3 different approaches with clear trade-offs (pros, cons, assumptions, risks)
+- Lead with your recommended approach and explain why
+- Help the researcher evaluate options by surfacing trade-offs — don't interrogate their ideas
 - Connect to existing literature via `[[wikilinks]]`
-- Identify gaps in reasoning
 
-<EXTREMELY-IMPORTANT>Do not just agree with the researcher. Your job is to stress-test ideas, expose flaws, and improve the research plan through constructive critique.</EXTREMELY-IMPORTANT>
+### 3. Design
 
-### Step 4: Produce Response or Plan
+After the researcher agrees on an approach:
+- Work out the experiment design: research question, hypothesis, methodology, variables, success criteria
+- Present it back to the researcher for confirmation
+- Be ready to loop back to **Discuss** if something doesn't make sense or needs clarification
 
-If this is Case 4 (Query):
-- [ ] Answer using wiki-grounded evidence first
-- [ ] If wiki evidence is missing, ask permission before web search
-- [ ] After answering, ask: "Do you want to add this into our wiki?"
+### 4. Update
 
-If this is Case 1-3:
-- [ ] Produce/update plan and backlog as below
-
-Write or update the research plan using `research-plan-template.md`:
-- [ ] Research question is clearly stated
-- [ ] Hypothesis is testable and specific
-- [ ] Motivation explains the gap and significance
-- [ ] Methodology outlines the approach
-- [ ] Key literature is linked via `[[wikilinks]]`
-- [ ] Experiment design outlines are included
-- [ ] Backlog link is present
-
-Save to `.research/plans/v<N>.md`
-
-### Step 5: Produce/Update Backlog
-
-Write or update the backlog using `backlog-template.md`:
-- [ ] Each task has a unique ID (T1, T2, T3...)
-- [ ] Each task has a clear description
-- [ ] Dependencies between tasks are specified
-- [ ] Assignee is noted (human or agent)
-- [ ] Relevant wiki links are included
-
-Save to `.research/plans/v<N>-backlog.md`
-
-### Step 6: Save to Wiki
-
-- [ ] Plan saved to `.research/plans/v<N>.md`
-- [ ] Backlog saved to `.research/plans/v<N>-backlog.md`
-- [ ] All `[[wikilinks]]` are correct and point to existing wiki pages
-- [ ] Existing entity/concept pages updated if the plan introduces new connections
-
-## Red Flags
-
-Stop and address these before proceeding:
-
-| Red Flag | Why It Matters |
-|----------|---------------|
-| No clear research question | The plan will produce unfocused work |
-| Vague hypothesis ("we'll see what happens") | Impossible to evaluate success or failure |
-| No motivation beyond "it's interesting" | Research lacks significance and impact |
-| Experiments not linked to hypothesis | Effort may be wasted on tangential work |
-| Backlog tasks with no dependencies listed | Execution order is ambiguous |
-| Researcher can't articulate why it matters | The plan needs more thought before proceeding |
-
-## Common Rationalizations
-
-| Rationalization | Reality |
-|----------------|---------|
-| "We'll figure out the hypothesis later" | No hypothesis = no way to evaluate results. Define it now. |
-| "The methodology is obvious" | If you can't write it down, it's not defined enough. |
-| "We don't need a backlog yet" | Without tasks, nothing gets executed. Create the backlog. |
-| "We can skip the literature review" | Without literature context, you may duplicate work or miss key insights. |
+Once you and the researcher reach agreement:
+- Write or update the research plan in `.research/plans/v<N>.md` (never overwrite — increment version)
+- Write or update the backlog with agreed tasks (T1, T2...), each with clear dependencies
+- Link to relevant wiki pages with `[[wikilinks]]`
+- Update existing entity/concept pages if the plan introduces new connections
 
 ## Transitioning to Other Skills
 
