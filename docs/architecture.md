@@ -4,15 +4,14 @@
 
 Pilot Research is a skill-based toolset for AI coding agents (opencode, Claude Code, Cursor, Codex) that provides structured research workflows. Researchers install skills into their agent, which then guide the agent through brainstorming, literature review, experiment execution, paper writing, and peer review.
 
-The system has five layers:
+The system has four layers:
 
 | Layer | Responsibility |
 |-------|---------------|
 | **Skills** | Define agent behavior per command. Self-contained markdown prompts. |
 | **Research Wiki** | Markdown-based knowledge graph stored in the project directory. |
 | **Platform Adapters** | Announcement injection + plugin manifests per agent platform. |
-| **CLI (`pilot`)** | Unified command-line tool for init, status, and dashboard. |
-| **Dashboard** | Local web UI for browsing, searching, and visualizing the research wiki. |
+| **CLI (`pilot`)** | Unified command-line tool for init, ingest, query, and status. |
 
 ---
 
@@ -52,12 +51,12 @@ pilot-research/
 │
 ├── cli/                             # Pilot CLI (Node.js)
 │   ├── pilot.mjs                    # Entry point
-│   └── ...                          # Commands: init, ingest, query, status, dashboard
+│   └── ...                          # Commands: init, ingest, query, status
 
-├── dashboard/                       # Web dashboard SPA
-│   ├── src/                         # Frontend (React/Vue/Svelte)
-│   └── dist/                        # Built static assets (embedded in CLI binary)
-│
+├── scripts/
+│   ├── init-wiki.sh                 # Legacy, delegates to `pilot init` if available
+│   └── transform-wikilinks.mjs
+
 ├── install.sh                       # One-line curl|bash installer
 ├── install.ps1                      # Windows PowerShell installer
 │
@@ -104,7 +103,7 @@ Each skill directory contains its own SKILL.md plus all templates and reference 
 
 ### D2: Pure markdown wiki
 
-The research wiki is pure markdown with `[[wikilinks]]` and YAML frontmatter. No database, no lock-in. Compatible with Obsidian, VSCode (with wiki extensions), and plain git.
+The research wiki is pure markdown with `[[wikilinks]]` and YAML frontmatter. No database, no lock-in. Compatible with Obsidian, VSCode (with wiki extensions), and plain git. We recommend Obsidian for browsing, visualizing the knowledge graph, and navigating backlinks.
 
 ### D3: Announcement pattern
 
@@ -131,15 +130,11 @@ When an agent finishes, it writes a handoff report into `research/handoff/`. The
 
 ### D8: CLI-first UX with `pilot`
 
-A single CLI binary (`pilot`) provides all user-facing commands: `pilot init`, `pilot status`, `pilot dashboard`. This replaces scattered shell scripts and gives users a unified entry point. The CLI is distributable via a one-line curl installer and also as an npm package.
+A single CLI binary (`pilot`) provides all user-facing commands: `pilot init`, `pilot ingest`, `pilot query`, `pilot status`. This replaces scattered shell scripts and gives users a unified entry point. The CLI is distributable via a one-line curl installer and also as an npm package.
 
 ### D9: One-line installer inspired by caveman
 
 `curl -fsSL https://raw.githubusercontent.com/OWNER/pilot-research/main/install.sh | bash` detects installed AI coding agents and installs pilot-research for each one using that agent's native mechanism. It also optionally installs the `pilot` CLI binary. Idempotent, safe to re-run, and supports `--dry-run`, `--only <agent>`, and `--minimal` flags.
-
-### D10: Dashboard as local web UI
-
-The dashboard is a static SPA served by `pilot dashboard`. The CLI binary embeds a tiny HTTP server that parses the `.research/` wiki and serves it as JSON. The frontend fetches this JSON and renders paper view, graph view, backlog view, and search. No external database or cloud service.
 
 ---
 
@@ -284,7 +279,6 @@ The `pilot` CLI provides a unified interface for all pilot-research operations:
 | `pilot ingest <type> <name>` | Create a new wiki page from the appropriate template |
 | `pilot query <search-terms>` | Search the wiki for pages matching terms |
 | `pilot status` | Print wiki overview (page counts, latest handoff, backlog summary) |
-| `pilot dashboard [--launch]` | Start or check status of the research dashboard |
 | `pilot --version` | Print version |
 | `pilot --help` | Print help |
 
@@ -292,13 +286,12 @@ Configuration: `~/.pilot-research/config.toml` or `.pilot-research.toml` in proj
 
 ---
 
-## Dashboard Architecture
+## Viewing the Research Wiki
 
-The dashboard is a local web UI for browsing and visualizing the research wiki, built as a React + Vite + Tailwind CSS SPA:
+We recommend [Obsidian](https://obsidian.md) for browsing the wiki:
 
-- **Paper List** — Toggle-able card list of paper summaries with metadata (authors, date, category, link). Click to expand/collapse summary. Click "Full Document" for full detail view with backlinks.
-- **Kanban Board** — 4-column task board (Open, Pending, Done, Archive) with split-screen markdown editor. Click a task card to split the view and edit task content in a markdown editor on the right.
-- **Knowledge Graph** — Interactive node-link graph where nodes are wiki pages (colored by type) and edges are `[[wikilinks]]`. Click a node to split the screen and view/edit its content.
-- **Artifact Finder** — IDE-like view with a directory tree sidebar (right), content viewer (center), and multi-tab support. Click files in the tree to open them as tabs in the viewer.
+1. Open Obsidian and choose "Open folder as vault"
+2. Select your `.research/` directory
+3. Enjoy graph view, backlinks panel, full-text search, and bidirectional `[[wikilink]]` navigation
 
-The dashboard is served by `pilot dashboard` which starts a local HTTP server (default: `http://localhost:4213`). The CLI parses wiki markdown files and serves them as JSON via a REST API. The React frontend is built with Vite and the output is served as static assets by the embedded server.
+The wiki also works with VSCode (with a wikilink extension), any markdown editor, or plain `git diff`.

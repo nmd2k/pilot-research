@@ -31,7 +31,6 @@
   "files": [
     "cli/",
     "skills/",
-    "dashboard/",
     "wiki/",
     "hooks/",
     ".opencode/",

@@ -310,37 +310,6 @@ function cmdStatus(args) {
   }
 }
 
-function cmdDashboard(args) {
-  let launch = false;
-  let port = 4213;
-
-  for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--launch') launch = true;
-    else if (args[i] === '--port' && args[i + 1]) { port = parseInt(args[i + 1], 10); i++; }
-    else if (args[i] === '--help') { printDashboardHelp(); return; }
-  }
-
-  const dashboardPath = path.join(PROJECT_ROOT, 'dashboard');
-  const serverModule = path.join(dashboardPath, 'server.mjs');
-
-  if (!fs.existsSync(serverModule)) {
-    log('error', 'Dashboard server not found. Make sure you are running from the pilot-research project root.');
-    process.exit(1);
-  }
-
-  const config = readConfig(process.cwd());
-  const wikiPath = config.wiki_path
-    ? path.resolve(config.wiki_path)
-    : findWikiDir(process.cwd());
-
-  import(serverModule).then(mod => {
-    mod.startServer({ wikiDir: wikiPath || undefined, port, launch });
-  }).catch(err => {
-    log('error', `Failed to start dashboard: ${err.message}`);
-    process.exit(1);
-  });
-}
-
 function printHelp() {
   console.log(`${BOLD}pilot${RESET} — Research workflow CLI for pilot-research
 
@@ -352,7 +321,6 @@ ${BOLD}Commands:${RESET}
   ingest <type> <name> Create a new wiki page from a template
   query <terms>       Search the wiki for matching pages
   status              Print wiki overview (page counts, latest handoff)
-  dashboard [--launch] Dashboard web UI
 
 ${BOLD}Page types for ingest:${RESET}
   paper, entity, concept, query, plan, experiment
@@ -415,22 +383,6 @@ ${BOLD}Description:${RESET}
 `);
 }
 
-function printDashboardHelp() {
-  console.log(`${BOLD}pilot dashboard${RESET} — Launch the research dashboard
-
-${BOLD}Usage:${RESET}
-  pilot dashboard [--launch] [--port <port>]
-
-${BOLD}Options:${RESET}
-  --launch            Start the server and open the browser
-  --port <port>       Custom port (default: 4213)
-
-${BOLD}Description:${RESET}
-  Starts a local web server for browsing and visualizing the research wiki.
-  ${YELLOW}Coming soon — see P10 in the backlog.${RESET}
-`);
-}
-
 const args = process.argv.slice(2);
 const command = args[0];
 
@@ -448,7 +400,6 @@ switch (command) {
   case 'ingest': cmdIngest(subArgs); break;
   case 'query': cmdQuery(subArgs); break;
   case 'status': cmdStatus(subArgs); break;
-  case 'dashboard': cmdDashboard(subArgs); break;
   default:
     log('error', `Unknown command: ${command}`);
     console.log('Run `pilot --help` for available commands.');

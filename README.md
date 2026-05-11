@@ -72,7 +72,6 @@ Run `./install.sh --help` for Unix/WSL flags; see `install.ps1` parameters for W
 | -------------------------------------------- | ---------------------------------------------------- |
 | `pilot init [path]`                          | Initialize a research wiki (default: `./.research/`) |
 | `pilot status`                               | Print wiki overview and statistics                   |
-| `pilot dashboard [--launch] [--port <port>]` | Start the research dashboard web UI                  |
 
 
 ### Configuration
@@ -91,33 +90,18 @@ Without it, the CLI walks up from the current directory looking for `.research/`
 pilot init
 pilot init ./my-research
 pilot status
-pilot dashboard --launch
 ```
 
 > **Note:** `scripts/init-wiki.sh` is deprecated. Use `pilot init` instead.
 
-## Dashboard
+## Viewing the Research Wiki
 
-Launch a local web dashboard to browse, search, and visualize your research wiki.
+The wiki is pure markdown with `[[wikilinks]]` and YAML frontmatter — compatible with any markdown editor. We recommend [Obsidian](https://obsidian.md) for the best experience:
 
-```bash
-pilot dashboard                # Start server at http://localhost:4213
-pilot dashboard --launch       # Start server and open browser
-pilot dashboard --port 8080    # Use a custom port
-```
-
-### API Endpoints
-
-The dashboard server exposes a REST API at `http://localhost:4213/api/`:
-
-
-| Endpoint                | Description                                      |
-| ----------------------- | ------------------------------------------------ |
-| `GET /api/pages`        | List all pages with type, title, tags, wikilinks |
-| `GET /api/page/:path`   | Full page content + parsed frontmatter           |
-| `GET /api/graph`        | Wikilink graph as nodes + edges                  |
-| `GET /api/search?q=...` | Full-text search                                 |
-| `GET /api/stats`        | Page counts, latest handoff, backlog summary     |
+1. Open Obsidian
+2. Choose "Open folder as vault"
+3. Select your `.research/` directory
+4. Enjoy graph view, backlinks, search, and bidirectional navigation
 
 
 ## Uninstallation

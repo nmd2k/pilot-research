@@ -520,7 +520,7 @@ EOF
   #   fi
   # fi
 
-  # 3) npm global (registry, then GitHub) — ships CLI + dashboard assets.
+  # 3) npm global (registry, then GitHub) — ships CLI + skills.
   if has npm; then
     note "  Installing pilot CLI via npm (global)…"
     if [ "$DRY" = 1 ]; then
