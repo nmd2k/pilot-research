@@ -2,7 +2,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,15 +9,6 @@ const __dirname = path.dirname(__filename);
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
 const SUBDIRS = ['papers', 'entities', 'concepts', 'queries', 'plans', 'experiments', 'handoff'];
-
-const TYPE_MAP = {
-  paper: { dir: 'papers', template: 'skills/pilot-literature/paper-summary-template.md' },
-  entity: { dir: 'entities', template: 'skills/pilot-literature/entity-template.md' },
-  concept: { dir: 'concepts', template: 'skills/pilot-literature/concept-template.md' },
-  query: { dir: 'queries', template: 'skills/pilot-literature/query-result-template.md' },
-  plan: { dir: 'plans', template: 'skills/pilot-brainstorm/research-plan-template.md' },
-  experiment: { dir: 'experiments', template: 'skills/pilot-execute/experiment-design-template.md' },
-};
 
 const RESET = '\x1b[0m';
 const RED = '\x1b[31m';
@@ -57,10 +47,6 @@ function readConfig(projectDir) {
     if (match) return { wiki_path: match[1].trim() };
   }
   return {};
-}
-
-function slugify(name) {
-  return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-').replace(/^-|-$/g, '');
 }
 
 function countFiles(dir) {
@@ -150,70 +136,8 @@ function cmdInit(args) {
   }
   console.log('');
   console.log('Next steps:');
-  console.log(`  1. Start a research plan: pilot ingest plan v1`);
-  console.log(`  2. Review wiki conventions: cat ${targetDir}/README.md`);
-}
-
-function cmdIngest(args) {
-  if (args.length === 0 || args[0] === '--help') { printIngestHelp(); return; }
-
-  const type = args[0];
-  const name = args[1];
-
-  if (!TYPE_MAP[type]) {
-    log('error', `Unknown page type: ${type}`);
-    console.log(`Valid types: ${Object.keys(TYPE_MAP).join(', ')}`);
-    process.exit(1);
-  }
-
-  if (!name) {
-    log('error', 'Missing name argument.');
-    console.log('Usage: pilot ingest <type> <name>');
-    process.exit(1);
-  }
-
-  const config = readConfig(process.cwd());
-  const wikiDir = config.wiki_path
-    ? path.resolve(config.wiki_path)
-    : findWikiDir(process.cwd());
-
-  if (!wikiDir) {
-    log('error', 'No research wiki found. Run `pilot init` first, or set wiki_path in .pilot-research.toml');
-    process.exit(1);
-  }
-
-  const { dir, template } = TYPE_MAP[type];
-  const slug = slugify(name);
-  const ext = type === 'plan' ? `${slug}.md` : `${slug}.md`;
-  const filePath = path.join(wikiDir, dir, ext);
-
-  if (fs.existsSync(filePath)) {
-    log('error', `File already exists: ${filePath}`);
-    log('info', 'Update the existing page instead of creating a duplicate.');
-    process.exit(1);
-  }
-
-  const templatePath = path.join(PROJECT_ROOT, template);
-  if (!fs.existsSync(templatePath)) {
-    log('error', `Template not found: ${templatePath}`);
-    process.exit(1);
-  }
-
-  let content = fs.readFileSync(templatePath, 'utf8');
-  const today = new Date().toISOString().split('T')[0];
-  content = content.replace(/YYYY-MM-DD/g, today);
-
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, content);
-  log('success', `Created: ${filePath}`);
-
-  const editor = process.env.EDITOR || process.env.VISUAL || 'vi';
-  try {
-    console.log(`Opening in ${editor}...`);
-    execSync(`${editor} "${filePath}"`, { stdio: 'inherit' });
-  } catch {
-    log('info', `Could not open editor. Edit manually: ${filePath}`);
-  }
+  console.log(`  1. Review wiki conventions: cat ${targetDir}/README.md`);
+  console.log(`  2. Start researching by asking your agent to use pilot-brainstorm`);
 }
 
 function cmdQuery(args) {
@@ -318,12 +242,8 @@ ${BOLD}Usage:${RESET}
 
 ${BOLD}Commands:${RESET}
   init [path]         Initialize a research wiki (default: ./.research/)
-  ingest <type> <name> Create a new wiki page from a template
   query <terms>       Search the wiki for matching pages
   status              Print wiki overview (page counts, latest handoff)
-
-${BOLD}Page types for ingest:${RESET}
-  paper, entity, concept, query, plan, experiment
 
 ${BOLD}Options:${RESET}
   --help              Show help for a specific command
@@ -348,26 +268,6 @@ ${BOLD}Description:${RESET}
   Creates the wiki directory structure with subdirectories:
   papers/, entities/, concepts/, queries/, plans/, experiments/, handoff/
   Copies the README template and optionally updates .gitignore.
-`);
-}
-
-function printIngestHelp() {
-  console.log(`${BOLD}pilot ingest${RESET} — Create a new wiki page from a template
-
-${BOLD}Usage:${RESET}
-  pilot ingest <type> <name>
-
-${BOLD}Page types:${RESET}
-  paper       → papers/<slug>.md
-  entity      → entities/<slug>.md
-  concept     → concepts/<slug>.md
-  query       → queries/<slug>.md
-  plan        → plans/<slug>.md
-  experiment  → experiments/<slug>.md
-
-${BOLD}Description:${RESET}
-  Creates a new wiki page from the appropriate template, then opens
-  it in your editor ($EDITOR). Validates naming and checks for duplicates.
 `);
 }
 
@@ -397,7 +297,6 @@ const subArgs = args.slice(1);
 
 switch (command) {
   case 'init': cmdInit(subArgs); break;
-  case 'ingest': cmdIngest(subArgs); break;
   case 'query': cmdQuery(subArgs); break;
   case 'status': cmdStatus(subArgs); break;
   default:

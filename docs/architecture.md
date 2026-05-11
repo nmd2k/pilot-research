@@ -11,7 +11,7 @@ The system has four layers:
 | **Skills** | Define agent behavior per command. Self-contained markdown prompts. |
 | **Research Wiki** | Markdown-based knowledge graph stored in the project directory. |
 | **Platform Adapters** | Announcement injection + plugin manifests per agent platform. |
-| **CLI (`pilot`)** | Unified command-line tool for init, ingest, query, and status. |
+| **CLI (`pilot`)** | Unified command-line tool for init, query, and status. |
 
 ---
 
@@ -51,7 +51,7 @@ pilot-research/
 │
 ├── cli/                             # Pilot CLI (Node.js)
 │   ├── pilot.mjs                    # Entry point
-│   └── ...                          # Commands: init, ingest, query, status
+│   └── ...                          # Commands: init, query, status
 
 ├── scripts/
 │   ├── init-wiki.sh                 # Legacy, delegates to `pilot init` if available
@@ -130,7 +130,7 @@ When an agent finishes, it writes a handoff report into `research/handoff/`. The
 
 ### D8: CLI-first UX with `pilot`
 
-A single CLI binary (`pilot`) provides all user-facing commands: `pilot init`, `pilot ingest`, `pilot query`, `pilot status`. This replaces scattered shell scripts and gives users a unified entry point. The CLI is distributable via a one-line curl installer and also as an npm package.
+A single CLI binary (`pilot`) provides all user-facing commands: `pilot init`, `pilot query`, `pilot status`. This replaces scattered shell scripts and gives users a unified entry point. The CLI is distributable via a one-line curl installer and also as an npm package.
 
 ### D9: One-line installer inspired by caveman
 
@@ -276,7 +276,6 @@ The `pilot` CLI provides a unified interface for all pilot-research operations:
 | Command | Description |
 |---------|-------------|
 | `pilot init [path]` | Initialize a research wiki at `[path]` (default: `./.research/`) |
-| `pilot ingest <type> <name>` | Create a new wiki page from the appropriate template |
 | `pilot query <search-terms>` | Search the wiki for pages matching terms |
 | `pilot status` | Print wiki overview (page counts, latest handoff, backlog summary) |
 | `pilot --version` | Print version |
