@@ -5,188 +5,118 @@ description: "Use when researcher wants to execute research tasks from the backl
 
 # Execute Research
 
-This skill manages research execution using a **leader/worker pattern**. When this skill is invoked, the current agent is the leader by default. The leader coordinates tasks, spawns worker sub-agents, monitors progress, validates outputs, and decides follow-up actions with the researcher.
+Leader/worker pattern for executing research tasks. The current agent is the leader — it coordinates workers, validates outputs, and manages the backlog.
+## Hard-Gate: Mandatory Rules
 
-## <HARD-GATE>Mandatory Rules</HARD-GATE>
-
-These rules apply to every skill. Violating any of these blocks progress.
-
-1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
-
-2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
-
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
-
-4. **Always refer to wiki links** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using your platform's native link format (e.g., `[[papers/slug]]` or `papers/slug`). Every reference must link to the wiki, not use plain text.</EXTREMELY-IMPORTANT>
-
-5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
-
-6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+1. **Wiki is source of truth** — All artifacts (papers, entities, concepts, plans, experiments) go into `.research/` using specified templates. Every reference uses wiki links (`[[papers/slug]]`). Before creating new pages, check for existing ones and update them. Links must be bidirectional.
+2. **Always handoff** — Check `.research/handoff/` before starting; write a handoff report before stopping. Never leave a session without one.
+3. **Ask before executing** — Confirm with the researcher before running scripts, spawning workers, or taking irreversible actions.
 
 ## Research Wiki Structure
 
-All research content lives in `.research/` in the project root:
-
+All content lives in `.research/`:
 - `papers/` — Paper summaries `[[papers/<slug>]]`
 - `entities/` — People, datasets, tools, institutions `[[entities/<name>]]`
 - `concepts/` — Methods, theories, frameworks `[[concepts/<name>]]`
 - `queries/` — Saved Q&A results `[[queries/<topic>]]`
 - `plans/` — Research plans `[[plans/v<N>]]`
 - `experiments/` — Experiment reports `[[experiments/<name>]]`
-- `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
+- `handoff/` — Agent handoff artifacts
 
-## <HARD-GATE>Before You Begin</HARD-GATE>
+## Before You Begin
 
-- [ ] Check `.research/handoff/` for a previous handoff report
-- [ ] If handoff exists, read it and resume context
-- [ ] Read the latest research plan from `.research/plans/v<N>.md`
+Read all relevant context:
+- [ ] Check `.research/handoff/` for previous handoff; resume if found
+- [ ] Read the latest plan from `.research/plans/v<N>.md`
 - [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md`
-- [ ] Confirm the backlog has tasks ready for execution
+- [ ] Review in-progress experiment reports in `.research/experiments/`
+- [ ] Note which tasks are done, in-progress, and pending
 
-<EXTREMELY-IMPORTANT>You cannot execute research without a plan and backlog. If these are missing, invoke `pilot-research:pilot-brainstorm` first.</EXTREMELY-IMPORTANT>
+<EXTREMELY-IMPORTANT>Cannot execute without a plan and backlog. If missing, invoke `pilot-research:pilot-brainstorm` first.</EXTREMELY-IMPORTANT>
 
 ## Leader / Worker Pattern
 
-### Leader (the current agent running this skill)
+### Leader
 
-The leader is responsible for:
-- Reading the plan and backlog
-- Deciding which tasks to execute and in what order
-- Spawning workers with clear, specific instructions
-- Monitoring worker progress and handling blockers
-- Reviewing worker results for quality, completeness, and correctness
-- Validating that outputs satisfy task objectives before accepting completion
-- Updating the backlog status and plan as needed
-- Writing handoff reports when sessions transition
+The leader coordinates — it does not execute experiments directly:
+- Reads plan and backlog, identifies ready tasks
+- Spawns workers with clear, specific instructions
+- Reviews worker results for quality, completeness, and correctness
+- Updates backlog and plan as tasks complete
+- Writes handoff reports
 
-The leader primarily coordinates and validates execution. Workers perform the scoped execution work.
+### Worker
 
-### Worker (sub-agent using `worker-prompt.md`)
-
-Each worker receives:
-- A single task description from the backlog
-- Relevant wiki context (plan, experiment design, related papers/concepts)
-- The experiment design template to follow
+Each worker receives task(s) from the backlog via `worker-prompt.md`:
+- Task ID, hypothesis, relevant wiki context
+- Experiment design to follow (`experiment-design-template.md`)
+- Output path for the experiment report
 
 Each worker produces:
-- An experiment report using `experiment-report-template.md`
-- Updated wiki pages (if the experiment reveals new entities or concepts)
-- A summary report back to the leader
-
-Each worker must:
-- Follow the `experiment-design-template.md` structure
-- Write results to the wiki using proper `[[wikilinks]]`
-- Report back with a clear summary of findings
+- Experiment report using `experiment-report-template.md`
+- Updated wiki pages for new entities/concepts discovered
+- Summary report back to the leader
 
 ## Process Flow
 
-### Step 1: Read Context
+### Step 1: Identify Ready Tasks
 
-Gather all relevant state:
-- [ ] Read the latest plan from `.research/plans/v<N>.md`
-- [ ] Read the latest backlog from `.research/plans/v<N>-backlog.md`
-- [ ] Read any `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]` reports
-- [ ] Review any in-progress experiment reports in `.research/experiments/`
-- [ ] Note which tasks are done, in-progress, and pending
+From the backlog, find tasks where:
+- [ ] Status is `todo`
+- [ ] All dependencies are `done`
+- [ ] Required resources are available
 
-### Step 2: Identify Next Tasks
-
-From the backlog, identify tasks ready to execute:
-- [ ] Task status is `todo`
-- [ ] All dependency tasks are `done`
-- [ ] Required resources (data, code, models) are available
-- [ ] The task aligns with the researcher's current priorities
-
-<EXTREMELY-IMPORTANT>Never start a task whose dependencies are not met. Check the "Depends on" column in the backlog before selecting tasks.</EXTREMELY-IMPORTANT>
-
-### Step 3: Plan Execution
+### Step 2: Plan & Confirm
 
 Present the execution plan to the researcher:
-- [ ] Which tasks will be executed and in what order
-- [ ] What sub-agents will be spawned for each task
-- [ ] What resources are needed
-- [ ] Estimated time or complexity for each task
-- [ ] Any risks or blockers
+- [ ] Which tasks, in what order, how many workers
+- [ ] Resources needed, risks, blockers
+- [ ] Get explicit approval before spawning any workers
 
-<EXTREMELY-IMPORTANT>Always confirm the execution plan with the researcher before spawning any workers. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+### Step 3: Spawn Workers
 
-### Step 4: Spawn Workers
+For each approved task, spawn a sub-agent with `worker-prompt.md`:
+- Task ID, hypothesis, relevant `[[wikilinks]]`
+- Experiment design template to follow
+- Output path: `.research/experiments/<name>.md`
+- Validation criteria the output must satisfy
 
-For each task, spawn a sub-agent with `worker-prompt.md`:
-- [ ] Provide the task description from the backlog
-- [ ] Provide relevant wiki context (plan, related papers, concepts, entities)
-- [ ] Specify the experiment design to follow
-- [ ] Specify where to write results (`.research/experiments/<name>.md`)
-- [ ] Specify naming conventions for artifacts
+### Step 4: Gather & Validate
 
-Worker instructions must include:
-- The task ID (e.g., T3)
-- The specific hypothesis or objective being tested
-- Which `[[wikilinks]]` are relevant
-- Where to save the experiment report
-- What format the results should follow
-- Validation criteria the worker output must satisfy
+As workers complete:
+- [ ] Review experiment reports for completeness, wiki links, results vs. criteria
+- [ ] If quality is insufficient, send revision feedback and rerun
+- [ ] Present results to researcher for confirmation
+- [ ] Mark completed tasks as `done` in the backlog
 
-### Step 5: Gather Results
+### Step 5: Plan Next Steps
 
-After each worker completes:
-- [ ] Review the experiment report for completeness and correctness
-- [ ] Check that results are saved to the wiki
-- [ ] Check that `[[wikilinks]]` are correct
-- [ ] Validate results against the task objective and success criteria
-- [ ] If quality is insufficient, send revision feedback and rerun the worker task
-- [ ] Ask the researcher if results are satisfactory
-- [ ] If results are unsatisfactory, discuss whether to retry, adjust, or move on
+- [ ] Add new tasks if results reveal additional work needed
+- [ ] Update the research plan if findings change the direction
+- [ ] Determine which tasks are now unblocked
+- [ ] Ask researcher: continue with more tasks or pause?
 
-### Step 6: Plan Next Steps
+### Step 6: Handoff
 
-Based on results:
-- [ ] Update the backlog: mark completed tasks as `done`, update in-progress tasks
-- [ ] Add new tasks if results reveal new work needed
-- [ ] Update the research plan if results change the direction
-- [ ] Determine which tasks are now unblocked and ready for execution
-- [ ] Ask the researcher whether to continue with more tasks or pause
-
-### Step 7: Handoff
-
-Write a handoff report to `.research/handoff/YY-MM-DD-execute-<agent-name>.md` using `handoff-report-template.md`:
-- [ ] What was done (completed tasks)
-- [ ] What was left undone (pending tasks)
-- [ ] Commands run (with exit codes)
-- [ ] Issues discovered
-- [ ] Key decisions made (and why)
-- [ ] Artifacts produced (with `[[wikilinks]]`)
-- [ ] Suggested next steps
-
-<EXTREMELY-IMPORTANT>Every session that does research work must produce a handoff report. No exceptions.</EXTREMELY-IMPORTANT>
+Write a handoff report to `.research/handoff/YY-MM-DD-execute-<agent-name>.md` using `handoff-report-template.md`. Include: completed tasks, pending tasks, key decisions, artifacts produced, suggested next steps.
 
 ## Red Flags
 
 | Red Flag | Why It Matters |
-|----------|---------------|
-| No research plan exists | Cannot execute without direction; invoke `pilot-research:pilot-brainstorm` |
-| No backlog exists | No tasks to execute; invoke `pilot-research:pilot-brainstorm` |
-| Starting a task before dependencies are met | Will produce invalid or incomplete results |
-| Worker produces results without wikilinks | Breaks the knowledge graph |
-| Skipping the researcher confirmation step | May execute unwanted or incorrect tasks |
-| Not writing handoff reports | Next agent has no context and must start from scratch |
-
-## Common Rationalizations
-
-| Rationalization | Reality |
-|----------------|---------|
-| "The task is simple, I'll just do it myself" | The leader/worker pattern ensures traceability and isolation. Use it. |
-| "I'll skip the handoff, the session is short" | Any work done without a handoff is lost context. Always handoff. |
-| "The backlog is outdated, I'll improvise" | Update the backlog first, then execute. Improvising breaks the chain. |
-| "Dependencies are probably done" | Check. Never assume. Blocked dependencies produce invalid results. |
+|---|---|
+| No plan or backlog | No direction or tasks; invoke `pilot-brainstorm` first |
+| Starting tasks with unmet dependencies | Produces invalid results |
+| Skipping researcher confirmation | May execute unwanted or incorrect tasks |
+| Worker output missing wiki links | Breaks the knowledge graph |
+| No handoff report | Next session loses all context |
+| Leader doing work instead of delegating | Defeats the leader/worker pattern — traceability and isolation are lost |
 
 ## Transitioning to Other Skills
 
-After completing execution:
-- If experiments produce results worth writing up → invoke `pilot-research:pilot-write-paper`
-- If results suggest the plan needs refinement → invoke `pilot-research:pilot-brainstorm`
-- If more literature is needed to interpret results → invoke `pilot-research:pilot-literature`
-- If researcher wants feedback on experiment design → invoke `pilot-research:pilot-peer-review`
+- Experiments worth writing up → `pilot-research:pilot-write-paper`
+- Results suggest plan revision → `pilot-research:pilot-brainstorm`
+- Need literature to interpret results → `pilot-research:pilot-literature`
+- Want feedback on experiment design → `pilot-research:pilot-peer-review`
 
 ## Templates
 

@@ -47,14 +47,6 @@ https://arxiv.org/html/2310.12345v1
 
 Use your agent's built-in web fetch tool to read the HTML page. This preserves math, formatting, and is much cleaner than PDF extraction.
 
-### Fallback: PDF via Web Fetch
-
-If HTML is unavailable, fetch the PDF URL directly. Most agent platforms can handle PDF content natively through web fetch.
-
-### Last Resort
-
-Ask the researcher to provide a plain-text version or copy-paste key sections.
-
 ## Literature Review Workflow
 
 ### 1. Search

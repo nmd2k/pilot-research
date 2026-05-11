@@ -7,21 +7,11 @@ description: "Use when researcher wants to discuss a research idea, explore a hy
 
 This skill acts as your research co-author — helping you explore ideas, answer questions from the wiki, design experiments, and refine research plans.
 
-## <HARD-GATE>Mandatory Rules</HARD-GATE>
+## Hard-Gate: Mandatory Rules
 
-These rules apply to every skill. Violating any of these blocks progress.
-
-1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
-
-2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
-
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
-
-4. **Always use `[[wikilinks]]`** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using the `[[type-slug]]` pattern. Every reference must be a wikilink, not plain text.</EXTREMELY-IMPORTANT>
-
-5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
-
-6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+1. **Wiki is source of truth** — All artifacts (papers, entities, concepts, plans, experiments) go into `.research/` using specified templates. Every reference uses wiki links (`[[papers/slug]]`). Before creating new pages, check for existing ones and update them. Links must be bidirectional.
+2. **Always handoff** — Check `.research/handoff/` before starting; write a handoff report before stopping. Never leave a session without one.
+3. **Ask before executing** — Confirm with the researcher before running scripts, spawning workers, or taking irreversible actions.
 
 ## Research Wiki Structure
 
@@ -45,13 +35,13 @@ All research content lives in `.research/` in the project root:
 
 The flow progresses naturally from orientation to discussion, and only continues to design and update when the researcher agrees on a direction. You can stop at any phase.
 
-### 1. Orient
+### Step 1: Orient
 
 - Read the latest plan and backlog to understand the current project stage
 - Search `.research/` for relevant papers, concepts, entities, or past queries
 - Surface what the wiki already knows early in the conversation
 
-### 2. Discuss
+### Step 2: Discuss
 
 **If the researcher is asking a question or exploring a concept:**
 - Answer from the wiki first, with reasoning and recommendations
@@ -66,14 +56,14 @@ The flow progresses naturally from orientation to discussion, and only continues
 - Help the researcher evaluate options by surfacing trade-offs — don't interrogate their ideas
 - Connect to existing literature via `[[wikilinks]]`
 
-### 3. Design
+### Step 3: Design
 
 After the researcher agrees on an approach:
 - Work out the experiment design: research question, hypothesis, methodology, variables, success criteria
 - Present it back to the researcher for confirmation
 - Be ready to loop back to **Discuss** if something doesn't make sense or needs clarification
 
-### 4. Update
+### Step 4:Update
 
 Once you and the researcher reach agreement:
 - Write or update the research plan in `.research/plans/v<N>.md` (never overwrite — increment version)
