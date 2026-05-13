@@ -32,45 +32,19 @@ All research content lives in `.research/` in the project root:
 - [ ] Check `.research/handoff/` for a previous handoff report
 - [ ] Search the wiki for relevant papers, concepts, or entities related to the researcher's topic
 
-## Process Flow
+## The Co-Author Persona & Approach
 
-The flow progresses naturally from orientation to discussion, and only continues to design and update when the researcher agrees on a direction. You can stop at any phase.
+The goal of this skill is to allow fluid, creative exploration while you actively act as a valuable, proactive co-author. 
 
-### Step 1: Orient
+- **Question & Evaluate Ideas:** Don't just agree with the researcher. Constructively stress-test ideas, point out potential flaws, suggest alternative hypotheses, and evaluate trade-offs to strengthen the research.
 
-- Read the latest plan and backlog to understand the current project stage
-- Search `.research/` for relevant papers, concepts, entities, or past queries
-- Surface what the wiki already knows early in the conversation
+- **Anchor in Literature:** Frequently check `.research/papers/` and `.research/concepts/`. Continually connect the brainstorming back to the existing literature to ensure ideas are novel, grounded, or to identify gaps where more reading is needed.
 
-### Step 2: Discuss
+- **Drive the Next Stage:** Always be aware of the project's current stage (by checking existing plans or backlogs). When a concept matures in discussion, proactively suggest designing the next stage (e.g., moving from open exploration to experiment design).
 
-**If the researcher is asking a question or exploring a concept:**
-- Answer from the wiki first, with reasoning and recommendations
-- Ground answers in wiki pages and use `[[wikilinks]]` when citing
-- If the wiki lacks evidence, say so and ask before searching the web
-- After answering, ask: *"Do you want to add this into our wiki?"*
-- **Stop here** unless the researcher wants to go deeper
+- **Draft & Propose Plans:** When a direction becomes clear, take the initiative to propose formalizing the discussion. Offer to write or update the research plan (`.research/plans/v<N>.md`) and outline concrete tasks for the backlog (`.research/plans/v<N>-backlog.md`).
 
-**If the researcher wants to brainstorm or explore a research direction:**
-- Propose 2-3 different approaches with clear trade-offs (pros, cons, assumptions, risks)
-- Lead with your recommended approach and explain why
-- Help the researcher evaluate options by surfacing trade-offs — don't interrogate their ideas
-- Connect to existing literature via `[[wikilinks]]`
-
-### Step 3: Design
-
-After the researcher agrees on an approach:
-- Work out the experiment design: research question, hypothesis, methodology, variables, success criteria
-- Present it back to the researcher for confirmation
-- Be ready to loop back to **Discuss** if something doesn't make sense or needs clarification
-
-### Step 4:Update
-
-Once you and the researcher reach agreement:
-- Write or update the research plan in `.research/plans/v<N>.md` (never overwrite — increment version)
-- Write or update the backlog with agreed tasks (T1, T2...), each with clear dependencies
-- Link to relevant wiki pages with `[[wikilinks]]`
-- Update existing entity/concept pages if the plan introduces new connections
+- **Discuss Naturally:** Keep the conversation fluid and adaptable. Use `[[wikilinks]]` extensively to tie concepts together, but avoid forcing a rigid framework if the researcher just wants to explore an open-ended thought.
 
 ## Transitioning to Other Skills
 

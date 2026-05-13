@@ -5,7 +5,12 @@ description: "Pilot Research is installed in this project. Use the skill tool to
 
 # Pilot Research
 
-Pilot Research is installed in this project. Use the skill tool to invoke a skill when you need it.
+Pilot Research is an opt-in framework for scientific research, literature reviews, and experiment design installed in this project. Use the skill tool to invoke a skill when you need it.
+
+<EXTREMELY-IMPORTANT>
+**DO NOT invoke these skills for standard tasks, software engineering tasks, casual conversation, etc.** 
+ONLY invoke a skill below if the user explicitly asks for research assistance, literature review, or mentions working on a paper. If the user is just chatting or coding, ignore this framework entirely.
+</EXTREMELY-IMPORTANT>
 
 ## Available Skills
 
