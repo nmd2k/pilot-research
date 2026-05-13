@@ -7,21 +7,14 @@ description: "Use when researcher wants feedback on their research plan, literat
 
 This skill provides structured, rigorous feedback on research artifacts using defined review criteria and severity levels.
 
-## <HARD-GATE>Mandatory Rules</HARD-GATE>
 
-These rules apply to every skill. Violating any of these blocks progress.
+## Hard-Gate: Mandatory Rules
 
-1. **Always use the wiki** — <EXTREMELY-IMPORTANT>All research artifacts (plans, papers, entities, concepts, experiment reports) go into the `.research/` wiki directory using the specified templates and naming conventions. Never store research content outside the wiki.</EXTREMELY-IMPORTANT>
+1. **Wiki is source of truth** — All artifacts (papers, entities, concepts, plans, experiments) go into `.research/` using specified templates. Every reference uses wiki links (`[[papers/slug]]`). Before creating new pages, check for existing ones and update them. Links must be bidirectional.
 
-2. **Always check for handoff** — <EXTREMELY-IMPORTANT>Before starting any work, check `.research/handoff/` for the latest handoff report. If one exists, read it and resume from where the previous agent left off. Do not start from scratch.</EXTREMELY-IMPORTANT>
+2. **Always handoff** — Check `.research/handoff/` before starting; write a handoff report before stopping. Never leave a session without one.
 
-3. **Always handoff before stopping** — <EXTREMELY-IMPORTANT>When the session ends or you complete a skill, write a handoff report to `.research/handoff/YY-MM-DD-<skill>-<agent-name>.md` using the handoff report template. Never leave a session without a handoff.</EXTREMELY-IMPORTANT>
-
-4. **Always refer to wiki links** — <EXTREMELY-IMPORTANT>When mentioning any paper, entity, concept, plan, or experiment, link to its wiki page using your platform's native link format (e.g., `[[papers/slug]]` or `papers/slug`). Every reference must link to the wiki, not use plain text.</EXTREMELY-IMPORTANT>
-
-5. **Always update existing pages** — <EXTREMELY-IMPORTANT>When ingesting new information, check if related entity/concept/paper pages already exist in the wiki. Update them rather than creating duplicates. Search before creating.</EXTREMELY-IMPORTANT>
-
-6. **Always ask before executing** — <EXTREMELY-IMPORTANT>Before running scripts, making significant changes, or taking irreversible actions, confirm with the researcher. Never execute without explicit approval.</EXTREMELY-IMPORTANT>
+3. **Ask before executing** — Confirm with the researcher before running scripts, making significant changes, or taking irreversible actions.
 
 ## Research Wiki Structure
 
@@ -33,6 +26,7 @@ All research content lives in `.research/` in the project root:
 - `queries/` — Saved Q&A results `[[queries/<topic>]]`
 - `plans/` — Research plans `[[plans/v<N>]]`
 - `experiments/` — Experiment reports `[[experiments/<name>]]`
+- `drafts/` — Paper drafts `[[drafts/v<N>]]`
 - `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## <HARD-GATE>Before You Begin</HARD-GATE>

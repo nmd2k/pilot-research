@@ -21,7 +21,8 @@ All content lives in `.research/`:
 - `queries/` — Saved Q&A results `[[queries/<topic>]]`
 - `plans/` — Research plans `[[plans/v<N>]]`
 - `experiments/` — Experiment reports `[[experiments/<name>]]`
-- `handoff/` — Agent handoff artifacts
+- `drafts/` — Paper drafts `[[drafts/v<N>]]`
+- `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
 ## Before You Begin
 

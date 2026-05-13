@@ -10,8 +10,8 @@ This skill acts as your research co-author — helping you explore ideas, answer
 ## Hard-Gate: Mandatory Rules
 
 1. **Wiki is source of truth** — All artifacts (papers, entities, concepts, plans, experiments) go into `.research/` using specified templates. Every reference uses wiki links (`[[papers/slug]]`). Before creating new pages, check for existing ones and update them. Links must be bidirectional.
-2. **Always handoff** — Check `.research/handoff/` before starting; write a handoff report before stopping. Never leave a session without one.
-3. **Ask before executing** — Confirm with the researcher before running scripts, spawning workers, or taking irreversible actions.
+
+2. **Always handoff** — Check `.research/handoff/` before starting; ask to write a handoff report before stopping. Never leave a session without one.
 
 ## Research Wiki Structure
 
@@ -22,6 +22,7 @@ All research content lives in `.research/` in the project root:
 - `concepts/` — Methods, theories, frameworks `[[concepts/<name>]]`
 - `queries/` — Saved Q&A results `[[queries/<topic>]]`
 - `plans/` — Research plans `[[plans/v<N>]]`
+- `drafts/` — Paper drafts `[[drafts/v<N>]]`
 - `experiments/` — Experiment reports `[[experiments/<name>]]`
 - `handoff/` — Agent handoff artifacts `[[handoff/<YY-MM-DD>-<skill>-<agent-name>]]`
 
