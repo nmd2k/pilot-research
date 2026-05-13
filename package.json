@@ -1,6 +1,6 @@
 {
   "name": "pilot-research",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Research workflow skills for coding agents: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, and pilot-peer-review",
   "keywords": [
     "research",
@@ -44,6 +44,5 @@
   "scripts": {
     "test": "node tests/benchmark-tokens.mjs && node tests/install-layout.mjs",
     "prepack": "node --check cli/pilot.mjs && node --check .opencode/plugins/pilot-research.js"
-  },
-
+  }
 }
