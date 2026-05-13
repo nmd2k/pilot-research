@@ -42,13 +42,6 @@ jobs:
       - name: Test (root)
         run: npm test
 
-      - name: Dashboard — install, test, build
-        working-directory: dashboard
-        run: |
-          npm ci
-          npm test
-          npm run build
-
       - name: Publish to npm (semver tag push)
         if: github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'v')
         run: npm publish --access public

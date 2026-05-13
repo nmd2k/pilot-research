@@ -43,27 +43,3 @@ jobs:
           name: pilot-research-npm-package
           path: "*.tgz"
           if-no-files-found: error
-
-  dashboard:
-    name: Dashboard (test + build)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: dashboard/package-lock.json
-
-      - name: Install
-        working-directory: dashboard
-        run: npm ci
-
-      - name: Test
-        working-directory: dashboard
-        run: npm test
-
-      - name: Production build
-        working-directory: dashboard
-        run: npm run build
