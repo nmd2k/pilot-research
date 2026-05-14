@@ -36,10 +36,9 @@ function Get-Providers {
         @{ Id = "claude"; Label = "Claude Code"; Detect = "command:claude" },
         @{ Id = "opencode"; Label = "OpenCode"; Detect = "command:opencode" },
         @{ Id = "cursor"; Label = "Cursor"; Detect = "dir:$home\.cursor||command:cursor" },
-        @{ Id = "windsurf"; Label = "Windsurf"; Detect = "dir:$home\.codeium\windsurf||dir:$home\.windsurf" },
-        @{ Id = "cline"; Label = "Cline"; Detect = "dir:cline" },
         @{ Id = "copilot"; Label = "GitHub Copilot"; Detect = "command:gh" },
-        @{ Id = "codex"; Label = "Codex CLI"; Detect = "command:codex" }
+        @{ Id = "codex"; Label = "Codex CLI"; Detect = "command:codex||dir:$home\.agents" },
+        @{ Id = "gemini"; Label = "Gemini CLI"; Detect = "command:gemini||dir:$home\.gemini" }
     )
 }
 
@@ -288,6 +287,12 @@ $CodexRule = @"
 You have pilot-research skills installed under ~/.agents/skills/. Follow the research workflow skills in your ``.research/`` wiki directory.
 "@
 
+$GeminiRule = @"
+# Pilot Research
+
+You have pilot-research skills installed under ~/.agents/skills/. Follow the research workflow skills in your ``.research/`` wiki directory.
+"@
+
 $GenericRule = "# Pilot Research`n`nYou have pilot-research skills installed. Follow the research workflow skills in your ``.research/`` wiki directory. All research artifacts go into ``.research/`` using wikilink conventions."
 
 function Install-PilotCli {
@@ -367,14 +372,18 @@ try {
                 Sync-PilotSkillsTo (Join-Path $env:USERPROFILE ".cursor\skills")
                 $script:Installed += "cursor"
             }
-            "windsurf" { Write-RuleFile ".windsurf\rules\pilot-research.md" $GenericRule; $script:Installed += "windsurf" }
-            "cline" { Write-RuleFile ".clinerules\pilot-research.md" $GenericRule; $script:Installed += "cline" }
             "copilot" { Write-RuleFile ".github\copilot-instructions.md" $GenericRule; $script:Installed += "copilot" }
             "codex" {
                 Write-Host "-> Codex CLI detected" -ForegroundColor Yellow
                 Sync-PilotSkillsTo (Join-Path $env:USERPROFILE ".agents\skills")
-                Write-RuleFile (Join-Path $env:USERPROFILE ".codex\instructions.md") $CodexRule
+                Write-RuleFile (Join-Path $env:USERPROFILE ".agents\instructions.md") $CodexRule
                 $script:Installed += "codex"
+            }
+            "gemini" {
+                Write-Host "-> Gemini CLI detected" -ForegroundColor Yellow
+                Sync-PilotSkillsTo (Join-Path $env:USERPROFILE ".agents\skills")
+                Write-RuleFile (Join-Path $env:USERPROFILE ".gemini\instructions.md") $GeminiRule
+                $script:Installed += "gemini"
             }
         }
     }
@@ -382,8 +391,6 @@ try {
     if ($All) {
         Write-Host "-> Writing per-repo rule files (-All)" -ForegroundColor Yellow
         Write-RuleFile ".cursor\rules\pilot-research.mdc" $CursorRule
-        Write-RuleFile ".windsurf\rules\pilot-research.md" $GenericRule
-        Write-RuleFile ".clinerules\pilot-research.md" $GenericRule
         Write-RuleFile ".github\copilot-instructions.md" $GenericRule
     }
 

@@ -49,7 +49,7 @@ function main() {
     PILOT_REPO: 'nmd2k/pilot-research',
   };
 
-  const agents = ['opencode', 'cursor', 'codex', 'claude'];
+  const agents = ['opencode', 'cursor', 'codex', 'claude', 'gemini'];
   for (const only of agents) {
     const r = spawnSync('bash', [INSTALL_SH, '--only', only, '--force'], {
       cwd: PROJECT_ROOT,
@@ -82,6 +82,14 @@ function main() {
   assert(
     fs.existsSync(path.join(fakeHome, '.opencode', 'plugins', 'pilot-research.js')),
     'OpenCode plugin missing',
+  );
+  assert(
+    fs.existsSync(path.join(fakeHome, '.agents', 'instructions.md')),
+    'Codex instructions missing',
+  );
+  assert(
+    fs.existsSync(path.join(fakeHome, '.gemini', 'instructions.md')),
+    'Gemini instructions missing',
   );
 
   fs.rmSync(fakeHome, { recursive: true, force: true });
