@@ -38,7 +38,8 @@ function Get-Providers {
         @{ Id = "cursor"; Label = "Cursor"; Detect = "dir:$home\.cursor||command:cursor" },
         @{ Id = "copilot"; Label = "GitHub Copilot"; Detect = "command:gh" },
         @{ Id = "codex"; Label = "Codex CLI"; Detect = "command:codex||dir:$home\.agents" },
-        @{ Id = "gemini"; Label = "Gemini CLI"; Detect = "command:gemini||dir:$home\.gemini" }
+        @{ Id = "antigravity"; Label = "Antigravity CLI"; Detect = "command:antigravity||dir:$home\.gemini" },
+        @{ Id = "gemini"; Label = "Gemini CLI (deprecated)"; Detect = "command:gemini" }
     )
 }
 
@@ -138,6 +139,7 @@ function Sync-PilotSkillsTo {
         Write-Host "  would sync pilot skills -> $DestBase" -ForegroundColor DarkGray
         return
     }
+    Write-Host "  syncing pilot skills -> $DestBase" -ForegroundColor DarkGray
     New-Item -ItemType Directory -Force -Path $DestBase | Out-Null
     foreach ($name in $PilotSkillNames) {
         $src = Join-Path $script:SkillsSrc $name
@@ -146,8 +148,8 @@ function Sync-PilotSkillsTo {
             continue
         }
         $dest = Join-Path $DestBase $name
-        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
-        Copy-Item -Recurse -Force $src $dest
+        if (Test-Path $dest) { Remove-Item -Recurse -Force $dest | Out-Null }
+        Copy-Item -Recurse -Force $src $dest | Out-Null
     }
 }
 
@@ -268,7 +270,6 @@ function Write-RuleFile {
     if ($dir) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
     Set-Content -Path $Path -Value $Content -NoNewline:$false
     Write-Host "  wrote $Path" -ForegroundColor Green
-    $script:Installed += (Split-Path $Path -Leaf)
 }
 
 $CursorRule = @"
@@ -291,6 +292,12 @@ $GeminiRule = @"
 # Pilot Research
 
 You have pilot-research skills installed under ~/.agents/skills/. Follow the research workflow skills in your ``.research/`` wiki directory.
+"@
+
+$AntigravityRule = @"
+# Pilot Research
+
+You have pilot-research skills installed under ~/.gemini/skills/. Follow the research workflow skills in your ``.research/`` wiki directory.
 "@
 
 $GenericRule = "# Pilot Research`n`nYou have pilot-research skills installed. Follow the research workflow skills in your ``.research/`` wiki directory. All research artifacts go into ``.research/`` using wikilink conventions."
@@ -379,8 +386,14 @@ try {
                 Write-RuleFile (Join-Path $env:USERPROFILE ".agents\instructions.md") $CodexRule
                 $script:Installed += "codex"
             }
+            "antigravity" {
+                Write-Host "-> Antigravity CLI detected" -ForegroundColor Yellow
+                Sync-PilotSkillsTo (Join-Path $env:USERPROFILE ".gemini\skills")
+                Write-RuleFile (Join-Path $env:USERPROFILE ".gemini\instructions.md") $AntigravityRule
+                $script:Installed += "antigravity"
+            }
             "gemini" {
-                Write-Host "-> Gemini CLI detected" -ForegroundColor Yellow
+                Write-Host "-> Gemini CLI (deprecated) detected" -ForegroundColor Yellow
                 Sync-PilotSkillsTo (Join-Path $env:USERPROFILE ".agents\skills")
                 Write-RuleFile (Join-Path $env:USERPROFILE ".gemini\instructions.md") $GeminiRule
                 $script:Installed += "gemini"

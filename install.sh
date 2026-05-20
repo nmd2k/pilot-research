@@ -94,13 +94,12 @@ ok()   { printf '%s%s%s\n' "$c_green" "$1" "$c_reset"; }
 has() { command -v "$1" >/dev/null 2>&1; }
 run() {
   if [ "$DRY" = 1 ]; then note "  would run: $*"; return 0; fi
-  echo "  $ $*"
   "$@"
 }
 
-PROVIDER_IDS=("claude" "opencode" "cursor" "copilot" "codex" "gemini")
-PROVIDER_LABELS=("Claude Code" "OpenCode" "Cursor" "GitHub Copilot" "Codex CLI" "Gemini CLI")
-PROVIDER_DETECT=("command:claude" "command:opencode" "command:cursor||dir:$HOME/.cursor" "command:gh" "command:codex||dir:$HOME/.agents" "command:gemini")
+PROVIDER_IDS=("claude" "opencode" "cursor" "copilot" "codex" "antigravity" "gemini")
+PROVIDER_LABELS=("Claude Code" "OpenCode" "Cursor" "GitHub Copilot" "Codex CLI" "Antigravity CLI" "Gemini CLI (deprecated)")
+PROVIDER_DETECT=("command:claude" "command:opencode" "command:cursor||dir:$HOME/.cursor" "command:gh" "command:codex||dir:$HOME/.agents" "command:antigravity||dir:$HOME/.gemini" "command:gemini")
 
 if [ "$LIST_ONLY" = 1 ]; then
   say "pilot-research supported agents"
@@ -222,16 +221,21 @@ sync_pilot_skills_to() {
     warn "  skill sync skipped (no skills source)"
     return 1
   fi
-  run mkdir -p "$dest_base"
+  if [ "$DRY" = 1 ]; then
+    note "  would sync pilot skills to $dest_base"
+    return 0
+  fi
+  note "  syncing pilot skills to $dest_base"
+  mkdir -p "$dest_base"
   local name
   for name in "${PILOT_SKILL_NAMES[@]}"; do
     if [ ! -d "$SKILLS_SRC/$name" ]; then
       warn "  missing skill in source: $name"
       continue
     fi
-    run rm -rf "$dest_base/$name"
-    run mkdir -p "$dest_base/$name"
-    run cp -R "$SKILLS_SRC/$name/." "$dest_base/$name/"
+    rm -rf "$dest_base/$name"
+    mkdir -p "$dest_base/$name"
+    cp -R "$SKILLS_SRC/$name/." "$dest_base/$name/"
   done
   return 0
 }
@@ -292,8 +296,15 @@ uninstall_codex() {
   INSTALLED+=("codex (uninstalled)")
 }
 
+uninstall_antigravity() {
+  say "→ Uninstalling from Antigravity CLI"
+  remove_pilot_skills_from "$HOME/.gemini/skills"
+  run rm -f "$HOME/.gemini/instructions.md"
+  INSTALLED+=("antigravity (uninstalled)")
+}
+
 uninstall_gemini() {
-  say "→ Uninstalling from Gemini CLI"
+  say "→ Uninstalling from Gemini CLI (deprecated)"
   remove_pilot_skills_from "$HOME/.agents/skills"
   run rm -f "$HOME/.gemini/instructions.md"
   INSTALLED+=("gemini (uninstalled)")
@@ -410,7 +421,6 @@ write_rule_file() {
   run mkdir -p "$(dirname "$file")"
   echo "$content" | run tee "$file" > /dev/null
   ok "  wrote $file"
-  INSTALLED+=("$(basename "$file")")
 }
 
 CURSOR_RULE='---
@@ -427,11 +437,13 @@ CODEX_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under 
 
 GEMINI_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.agents/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
+ANTIGRAVITY_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.gemini/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+
 install_cursor() {
   say "→ Cursor detected"
   write_rule_file "$HOME/.cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
   sync_pilot_skills_to "$HOME/.cursor/skills"
-  ok "  Cursor: rules → ~/.cursor/rules, skills → ~/.cursor/skills"
+  ok "  Cursor installed (rules + skills)"
   INSTALLED+=("cursor")
 }
 
@@ -449,8 +461,16 @@ install_codex() {
   INSTALLED+=("codex")
 }
 
+install_antigravity() {
+  say "→ Antigravity CLI detected"
+  sync_pilot_skills_to "$HOME/.gemini/skills"
+  write_rule_file "$HOME/.gemini/instructions.md" "$ANTIGRAVITY_RULE"
+  ok "  Antigravity skills → ~/.gemini/skills"
+  INSTALLED+=("antigravity")
+}
+
 install_gemini() {
-  say "→ Gemini CLI detected"
+  say "→ Gemini CLI (deprecated) detected"
   sync_pilot_skills_to "$HOME/.agents/skills"
   write_rule_file "$HOME/.gemini/instructions.md" "$GEMINI_RULE"
   ok "  Gemini skills → ~/.agents/skills"
@@ -589,6 +609,7 @@ while [ $i -lt "$total" ]; do
         cursor)  uninstall_cursor ;;
         copilot)  uninstall_copilot ;;
         codex)   uninstall_codex ;;
+        antigravity) uninstall_antigravity ;;
         gemini)  uninstall_gemini ;;
       esac
     else
@@ -598,6 +619,7 @@ while [ $i -lt "$total" ]; do
         cursor)  install_cursor ;;
         copilot)  install_copilot ;;
         codex)   install_codex ;;
+        antigravity) install_antigravity ;;
         gemini)  install_gemini ;;
       esac
     fi
