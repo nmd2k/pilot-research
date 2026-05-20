@@ -94,13 +94,12 @@ ok()   { printf '%s%s%s\n' "$c_green" "$1" "$c_reset"; }
 has() { command -v "$1" >/dev/null 2>&1; }
 run() {
   if [ "$DRY" = 1 ]; then note "  would run: $*"; return 0; fi
-  echo "  $ $*"
   "$@"
 }
 
-PROVIDER_IDS=("claude" "opencode" "cursor" "windsurf" "cline" "copilot" "codex")
-PROVIDER_LABELS=("Claude Code" "OpenCode" "Cursor" "Windsurf" "Cline" "GitHub Copilot" "Codex CLI")
-PROVIDER_DETECT=("command:claude" "command:opencode" "command:cursor||dir:$HOME/.cursor" "command:windsurf||dir:$HOME/.codeium/windsurf||dir:$HOME/.windsurf" "vscode-ext:cline" "command:gh" "command:codex")
+PROVIDER_IDS=("claude" "opencode" "cursor" "copilot" "codex" "antigravity" "gemini")
+PROVIDER_LABELS=("Claude Code" "OpenCode" "Cursor" "GitHub Copilot" "Codex CLI" "Antigravity CLI" "Gemini CLI (deprecated)")
+PROVIDER_DETECT=("command:claude" "command:opencode" "command:cursor||dir:$HOME/.cursor" "command:gh" "command:codex||dir:$HOME/.agents" "command:antigravity||dir:$HOME/.gemini" "command:gemini")
 
 if [ "$LIST_ONLY" = 1 ]; then
   say "pilot-research supported agents"
@@ -222,16 +221,21 @@ sync_pilot_skills_to() {
     warn "  skill sync skipped (no skills source)"
     return 1
   fi
-  run mkdir -p "$dest_base"
+  if [ "$DRY" = 1 ]; then
+    note "  would sync pilot skills to $dest_base"
+    return 0
+  fi
+  note "  syncing pilot skills to $dest_base"
+  mkdir -p "$dest_base"
   local name
   for name in "${PILOT_SKILL_NAMES[@]}"; do
     if [ ! -d "$SKILLS_SRC/$name" ]; then
       warn "  missing skill in source: $name"
       continue
     fi
-    run rm -rf "$dest_base/$name"
-    run mkdir -p "$dest_base/$name"
-    run cp -R "$SKILLS_SRC/$name/." "$dest_base/$name/"
+    rm -rf "$dest_base/$name"
+    mkdir -p "$dest_base/$name"
+    cp -R "$SKILLS_SRC/$name/." "$dest_base/$name/"
   done
   return 0
 }
@@ -279,18 +283,6 @@ uninstall_cursor() {
   INSTALLED+=("cursor (uninstalled)")
 }
 
-uninstall_windsurf() {
-  say "→ Uninstalling from Windsurf"
-  run rm -f ".windsurf/rules/pilot-research.md"
-  INSTALLED+=("windsurf (uninstalled)")
-}
-
-uninstall_cline() {
-  say "→ Uninstalling from Cline"
-  run rm -f ".clinerules/pilot-research.md"
-  INSTALLED+=("cline (uninstalled)")
-}
-
 uninstall_copilot() {
   say "→ Uninstalling from GitHub Copilot"
   run rm -f ".github/copilot-instructions.md"
@@ -300,8 +292,22 @@ uninstall_copilot() {
 uninstall_codex() {
   say "→ Uninstalling from Codex CLI"
   remove_pilot_skills_from "$HOME/.agents/skills"
-  run rm -f "$HOME/.codex/instructions.md"
+  run rm -f "$HOME/.agents/instructions.md"
   INSTALLED+=("codex (uninstalled)")
+}
+
+uninstall_antigravity() {
+  say "→ Uninstalling from Antigravity CLI"
+  remove_pilot_skills_from "$HOME/.gemini/skills"
+  run rm -f "$HOME/.gemini/instructions.md"
+  INSTALLED+=("antigravity (uninstalled)")
+}
+
+uninstall_gemini() {
+  say "→ Uninstalling from Gemini CLI (deprecated)"
+  remove_pilot_skills_from "$HOME/.agents/skills"
+  run rm -f "$HOME/.gemini/instructions.md"
+  INSTALLED+=("gemini (uninstalled)")
 }
 
 uninstall_cli() {
@@ -415,7 +421,6 @@ write_rule_file() {
   run mkdir -p "$(dirname "$file")"
   echo "$content" | run tee "$file" > /dev/null
   ok "  wrote $file"
-  INSTALLED+=("$(basename "$file")")
 }
 
 CURSOR_RULE='---
@@ -426,32 +431,20 @@ alwaysApply: true
 
 You have pilot-research skills installed under ~/.cursor/skills/. Follow the research workflow skills in your `.research/` wiki directory. Use the skill registry for: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review. All research artifacts go into `.research/` using wikilink conventions.'
 
-WINDSURF_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
-
-CLINE_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
-
 COPILOT_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed. Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions. Skills: pilot-brainstorm, pilot-literature, pilot-execute, pilot-write-paper, pilot-peer-review.'
 
 CODEX_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.agents/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+
+GEMINI_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.agents/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
+
+ANTIGRAVITY_RULE=$'# Pilot Research\n\nYou have pilot-research skills installed under ~/.gemini/skills/ (pilot-* and using-pilot-research). Follow the research workflow skills in your `.research/` wiki directory. All research artifacts go into `.research/` using wikilink conventions.'
 
 install_cursor() {
   say "→ Cursor detected"
   write_rule_file "$HOME/.cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
   sync_pilot_skills_to "$HOME/.cursor/skills"
-  ok "  Cursor: rules → ~/.cursor/rules, skills → ~/.cursor/skills"
+  ok "  Cursor installed (rules + skills)"
   INSTALLED+=("cursor")
-}
-
-install_windsurf() {
-  say "→ Windsurf detected"
-  write_rule_file ".windsurf/rules/pilot-research.md" "$WINDSURF_RULE"
-  INSTALLED+=("windsurf")
-}
-
-install_cline() {
-  say "→ Cline detected"
-  write_rule_file ".clinerules/pilot-research.md" "$CLINE_RULE"
-  INSTALLED+=("cline")
 }
 
 install_copilot() {
@@ -463,9 +456,25 @@ install_copilot() {
 install_codex() {
   say "→ Codex CLI detected"
   sync_pilot_skills_to "$HOME/.agents/skills"
-  write_rule_file "$HOME/.codex/instructions.md" "$CODEX_RULE"
+  write_rule_file "$HOME/.agents/instructions.md" "$CODEX_RULE"
   ok "  Codex / Agents skills → ~/.agents/skills"
   INSTALLED+=("codex")
+}
+
+install_antigravity() {
+  say "→ Antigravity CLI detected"
+  sync_pilot_skills_to "$HOME/.gemini/skills"
+  write_rule_file "$HOME/.gemini/instructions.md" "$ANTIGRAVITY_RULE"
+  ok "  Antigravity skills → ~/.gemini/skills"
+  INSTALLED+=("antigravity")
+}
+
+install_gemini() {
+  say "→ Gemini CLI (deprecated) detected"
+  sync_pilot_skills_to "$HOME/.agents/skills"
+  write_rule_file "$HOME/.gemini/instructions.md" "$GEMINI_RULE"
+  ok "  Gemini skills → ~/.agents/skills"
+  INSTALLED+=("gemini")
 }
 
 install_cli() {
@@ -598,33 +607,29 @@ while [ $i -lt "$total" ]; do
         claude)  uninstall_claude ;;
         opencode) uninstall_opencode ;;
         cursor)  uninstall_cursor ;;
-        windsurf) uninstall_windsurf ;;
-        cline)   uninstall_cline ;;
         copilot)  uninstall_copilot ;;
         codex)   uninstall_codex ;;
+        antigravity) uninstall_antigravity ;;
+        gemini)  uninstall_gemini ;;
       esac
     else
       case "$id" in
         claude)  install_claude ;;
         opencode) install_opencode ;;
         cursor)  install_cursor ;;
-        windsurf) install_windsurf ;;
-        cline)   install_cline ;;
         copilot)  install_copilot ;;
         codex)   install_codex ;;
+        antigravity) install_antigravity ;;
+        gemini)  install_gemini ;;
       esac
     fi
   fi
   i=$((i + 1))
 done
 
-if [ "$UNINSTALL" = 1 ]; then
-  uninstall_cli
-elif [ "$ALL" = 1 ]; then
+if [ "$UNINSTALL" = 0 ] && [ "$ALL" = 1 ]; then
   say "→ Writing per-repo rule files (--all)"
   write_rule_file ".cursor/rules/pilot-research.mdc" "$CURSOR_RULE"
-  write_rule_file ".windsurf/rules/pilot-research.md" "$WINDSURF_RULE"
-  write_rule_file ".clinerules/pilot-research.md" "$CLINE_RULE"
   write_rule_file ".github/copilot-instructions.md" "$COPILOT_RULE"
 fi
 

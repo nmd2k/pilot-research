@@ -49,7 +49,7 @@ function main() {
     PILOT_REPO: 'nmd2k/pilot-research',
   };
 
-  const agents = ['opencode', 'cursor', 'codex', 'claude'];
+  const agents = ['opencode', 'cursor', 'codex', 'claude', 'antigravity', 'gemini'];
   for (const only of agents) {
     const r = spawnSync('bash', [INSTALL_SH, '--only', only, '--force'], {
       cwd: PROJECT_ROOT,
@@ -62,10 +62,11 @@ function main() {
   const opencodeSkills = path.join(xdgConfig, 'opencode', 'skills');
   const cursorSkills = path.join(fakeHome, '.cursor', 'skills');
   const agentsSkills = path.join(fakeHome, '.agents', 'skills');
+  const geminiSkills = path.join(fakeHome, '.gemini', 'skills');
   const claudeGlobal = path.join(fakeHome, '.claude', 'skills');
   const claudePluginSkills = path.join(fakeHome, '.claude-plugin', 'pilot-research', 'skills');
 
-  for (const base of [opencodeSkills, cursorSkills, agentsSkills, claudeGlobal, claudePluginSkills]) {
+  for (const base of [opencodeSkills, cursorSkills, agentsSkills, geminiSkills, claudeGlobal, claudePluginSkills]) {
     for (const id of SKILL_IDS) {
       const skillMd = path.join(base, id, 'SKILL.md');
       assert(fs.existsSync(skillMd), `missing ${skillMd}`);
@@ -82,6 +83,14 @@ function main() {
   assert(
     fs.existsSync(path.join(fakeHome, '.opencode', 'plugins', 'pilot-research.js')),
     'OpenCode plugin missing',
+  );
+  assert(
+    fs.existsSync(path.join(fakeHome, '.agents', 'instructions.md')),
+    'Codex instructions missing',
+  );
+  assert(
+    fs.existsSync(path.join(fakeHome, '.gemini', 'instructions.md')),
+    'Gemini instructions missing',
   );
 
   fs.rmSync(fakeHome, { recursive: true, force: true });
